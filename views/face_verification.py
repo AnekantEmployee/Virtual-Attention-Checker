@@ -7,6 +7,7 @@ from PIL import Image
 class FaceVerification:
     def __init__(self):
         # Load target images
+        # target_dir = "target_img_athrva"  # Directory containing target images
         target_dir = "target_img"  # Directory containing target images
         targets = self.load_target_images(target_dir)
         self.targets = targets
