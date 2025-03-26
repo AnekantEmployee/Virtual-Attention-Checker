@@ -10,6 +10,7 @@ import numpy as np
 from datetime import datetime
 from .jsonencoder import JSONEncoder
 from .face_detector import FaceDetector
+from .face_verification import FaceVerification
 
 
 class ScreenshotManager:
@@ -56,6 +57,7 @@ class ScreenshotManager:
 
         # Initialize face detector
         self.face_detector = FaceDetector()
+        self.face_verification = FaceVerification()
 
         # Initialize data structure
         self.data = {
@@ -148,8 +150,12 @@ class ScreenshotManager:
             screenshot_data["face_data"].append(face_data)
 
         # Update data
+        screenshot_data["verification_data"] = self.face_verification.verifyFace(
+            screenshot_data
+        )
         self.data["screenshots"].append(screenshot_data)
         self.data["total_count"] += 1
+
         self._save_json()
 
         return screenshot_data, is_same

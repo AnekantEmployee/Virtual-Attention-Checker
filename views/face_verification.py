@@ -151,129 +151,96 @@ class FaceVerification:
         self.training_data = np.array(face_data)
         self.training_labels = np.array(labels)
 
-    def verifyFace(self):
+    def verifyFace(self, screenshot):
         """Verify faces in screenshots using our improved model"""
         try:
-            # Load screenshot data
-            with open("screenshot_data.json") as f:
-                data = json.load(f)["screenshots"]
+            if not screenshot["face_data"]:
+                return
 
-            results = []
+            result = []
 
-            for screenshot in data:
-                if not screenshot["face_data"]:
+            for face in screenshot["face_data"]:
+                cropped_face_path = face["cropped_face_path"]
+
+                # Check if face image is valid
+                valid, msg = self.is_valid_image(cropped_face_path)
+                if not valid:
+                    print(f"Skipping {cropped_face_path}: {msg}")
+                    return
+
+                try:
+                    # Process the face image
+                    img = cv2.imread(cropped_face_path)
+                    if img is None:
+                        print(f"Could not read image: {cropped_face_path}")
+                        continue
+
+                    # Convert to RGB
+                    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+                    # Detect face with MTCNN
+                    face_results = self.face_detector.detect_faces(img_rgb)
+                    if len(face_results) == 0:
+                        print(f"No face detected in {cropped_face_path}")
+                        continue
+
+                    # Take the best face
+                    best_face = max(face_results, key=lambda x: x["confidence"])
+                    x, y, w, h = best_face["box"]
+
+                    # Ensure coordinates are within bounds
+                    x, y = max(0, x), max(0, y)
+                    w, h = min(w, img.shape[1] - x), min(h, img.shape[0] - y)
+
+                    if w <= 0 or h <= 0:
+                        print(f"Invalid face dimensions in {cropped_face_path}")
+                        continue
+
+                    face_img = img_rgb[y : y + h, x : x + w]
+
+                    # Get embedding
+                    embedding = self.get_face_embedding(face_img)
+                    if embedding is None:
+                        print(f"Could not generate embedding for {cropped_face_path}")
+                        continue
+
+                    embedding = embedding.reshape(1, -1)
+
+                    # Predict using SVM
+                    predictions = self.classifier.predict_proba(embedding)[0]
+                    best_class_indices = np.argmax(predictions)
+                    best_class_probability = predictions[best_class_indices]
+
+                    # Get the predicted label
+                    predicted_label = self.le.inverse_transform([best_class_indices])[0]
+
+                    # Calculate cosine similarity with all training samples
+                    similarities = cosine_similarity(embedding, self.training_data)
+                    max_similarity = np.max(similarities)
+
+                    # Thresholds
+                    identification_threshold = 0.6  # For recognizing known faces
+                    verification_threshold = 0.6  # For confirming identity
+
+                    is_recognized = best_class_probability > identification_threshold
+                    is_verified = max_similarity > verification_threshold
+
+                    result_temp = {
+                        "face_path": cropped_face_path,
+                        "predicted_label": predicted_label,
+                        "confidence": float(best_class_probability),
+                        "max_similarity": float(max_similarity),
+                        "is_recognized": bool(is_recognized),
+                        "is_verified": bool(is_verified),
+                    }
+
+                    result.append(result_temp)
+
+                except Exception as e:
+                    print(f"Error processing {cropped_face_path}: {str(e)}")
                     continue
 
-                for face in screenshot["face_data"]:
-                    cropped_face_path = face["cropped_face_path"]
-
-                    # Check if face image is valid
-                    valid, msg = self.is_valid_image(cropped_face_path)
-                    if not valid:
-                        print(f"Skipping {cropped_face_path}: {msg}")
-                        continue
-
-                    try:
-                        # Process the face image
-                        img = cv2.imread(cropped_face_path)
-                        if img is None:
-                            print(f"Could not read image: {cropped_face_path}")
-                            continue
-
-                        # Convert to RGB
-                        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-                        # Detect face with MTCNN
-                        face_results = self.face_detector.detect_faces(img_rgb)
-                        if len(face_results) == 0:
-                            print(f"No face detected in {cropped_face_path}")
-                            continue
-
-                        # Take the best face
-                        best_face = max(face_results, key=lambda x: x["confidence"])
-                        x, y, w, h = best_face["box"]
-
-                        # Ensure coordinates are within bounds
-                        x, y = max(0, x), max(0, y)
-                        w, h = min(w, img.shape[1] - x), min(h, img.shape[0] - y)
-
-                        if w <= 0 or h <= 0:
-                            print(f"Invalid face dimensions in {cropped_face_path}")
-                            continue
-
-                        face_img = img_rgb[y : y + h, x : x + w]
-
-                        # Get embedding
-                        embedding = self.get_face_embedding(face_img)
-                        if embedding is None:
-                            print(
-                                f"Could not generate embedding for {cropped_face_path}"
-                            )
-                            continue
-
-                        embedding = embedding.reshape(1, -1)
-
-                        # Predict using SVM
-                        predictions = self.classifier.predict_proba(embedding)[0]
-                        best_class_indices = np.argmax(predictions)
-                        best_class_probability = predictions[best_class_indices]
-
-                        # Get the predicted label
-                        predicted_label = self.le.inverse_transform(
-                            [best_class_indices]
-                        )[0]
-
-                        # Calculate cosine similarity with all training samples
-                        similarities = cosine_similarity(embedding, self.training_data)
-                        max_similarity = np.max(similarities)
-
-                        # Thresholds
-                        identification_threshold = 0.6  # For recognizing known faces
-                        verification_threshold = 0.65  # For confirming identity
-
-                        is_recognized = (
-                            best_class_probability > identification_threshold
-                        )
-                        is_verified = max_similarity > verification_threshold
-
-                        result = {
-                            "face_path": cropped_face_path,
-                            "predicted_label": predicted_label,
-                            "confidence": float(best_class_probability),
-                            "max_similarity": float(max_similarity),
-                            "is_recognized": bool(is_recognized),
-                            "is_verified": bool(is_verified),
-                        }
-
-                        results.append(result)
-
-                        print(f"\nFace: {cropped_face_path}")
-                        print(
-                            f"Best match: {predicted_label} (confidence: {best_class_probability:.2%})"
-                        )
-                        print(f"Max similarity with database: {max_similarity:.2%}")
-                        print(f"Recognized: {is_recognized}")
-                        print(f"Verified: {is_verified}")
-
-                    except Exception as e:
-                        print(f"Error processing {cropped_face_path}: {str(e)}")
-                        continue
-
-            return results
-
+            return result
         except Exception as outer_e:
             print(f"Outer error: {str(outer_e)}")
             return []
-
-
-if __name__ == "__main__":
-    try:
-        face_verification = FaceVerification()
-        verification_results = face_verification.verifyFace()
-
-        # Save results to JSON file
-        with open("verification_results.json", "w") as f:
-            json.dump(verification_results, f, indent=2)
-
-    except Exception as e:
-        print(f"Failed to initialize face verification: {str(e)}")
