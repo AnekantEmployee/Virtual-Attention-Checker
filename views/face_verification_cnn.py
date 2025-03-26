@@ -3,22 +3,31 @@ import json
 import cv2
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.preprocessing import LabelEncoder
 import pickle
 from PIL import Image
+import mtcnn
+from facenet_pytorch import InceptionResnetV1
+import torch
+from sklearn.metrics.pairwise import cosine_similarity
 
 class FaceVerification:
     def __init__(self):
-        # Initialize face detector
-        self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        # Initialize face detector with min_face_size parameter
+        self.face_detector = mtcnn.MTCNN()
         
-        # Load target images and train KNN model
+        # Initialize FaceNet for face embeddings
+        self.resnet = InceptionResnetV1(pretrained='vggface2').eval()
+        
+        # Load target images and train model
         target_dir = "target_img"
         self.targets = self.load_target_images(target_dir)
         if not self.targets:
             raise ValueError("No valid target images found in target directory")
         
-        # Train KNN model
-        self.train_knn_model()
+        # Train model
+        self.train_model()
 
     def is_valid_image(self, image_path, min_size=64):
         """Check if image exists and meets minimum size requirements"""
@@ -50,31 +59,80 @@ class FaceVerification:
                     print(f"Skipping target {filename}: {msg}")
         return targets
 
-    def train_knn_model(self):
-        """Train KNN model with target images"""
+    def get_face_embedding(self, face_image):
+        """Convert face image to embedding using FaceNet"""
+        try:
+            # Convert to tensor and preprocess
+            face = cv2.resize(face_image, (160, 160))
+            face = face.astype('float32')
+            
+            # Convert from BGR to RGB if needed
+            if len(face.shape) == 3 and face.shape[2] == 3:
+                face = cv2.cvtColor(face, cv2.COLOR_BGR2RGB)
+            
+            # Standardize pixel values
+            mean, std = face.mean(), face.std()
+            face = (face - mean) / std
+            
+            # Convert to PyTorch tensor
+            face = torch.FloatTensor(face).permute(2, 0, 1).unsqueeze(0)
+            
+            # Get embedding
+            with torch.no_grad():
+                embedding = self.resnet(face)
+            
+            return embedding.numpy().flatten()
+        except Exception as e:
+            print(f"Error generating embedding: {str(e)}")
+            return None
+
+    def train_model(self):
+        """Train model with target images using face embeddings"""
         face_data = []
         labels = []
         
         for target in self.targets:
             try:
-                # Read and convert to grayscale
+                # Read image
                 img = cv2.imread(target["path"])
-                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                if img is None:
+                    print(f"Could not read image: {target['path']}")
+                    continue
                 
-                # Detect face
-                faces = self.face_cascade.detectMultiScale(gray, 1.3, 5)
-                if len(faces) == 0:
+                # Convert to RGB (MTCNN expects RGB)
+                img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                
+                # Detect face with MTCNN
+                results = self.face_detector.detect_faces(img_rgb)
+                if len(results) == 0:
                     print(f"No face detected in target image: {target['path']}")
                     continue
                 
-                # Take the first face found
-                (x, y, w, h) = faces[0]
-                face_img = gray[y:y+h, x:x+w]
+                # Take the face with highest confidence
+                best_face = max(results, key=lambda x: x['confidence'])
                 
-                # Resize and flatten
-                resized_face = cv2.resize(face_img, (50, 50)).flatten()
-                face_data.append(resized_face)
+                # Extract face
+                x, y, w, h = best_face['box']
+                # Ensure coordinates are within image bounds
+                x, y = max(0, x), max(0, y)
+                w, h = min(w, img.shape[1] - x), min(h, img.shape[0] - y)
+                
+                if w <= 0 or h <= 0:
+                    print(f"Invalid face dimensions in {target['path']}")
+                    continue
+                
+                face_img = img_rgb[y:y+h, x:x+w]
+                
+                # Get face embedding
+                embedding = self.get_face_embedding(face_img)
+                if embedding is None:
+                    print(f"Could not generate embedding for {target['path']}")
+                    continue
+                
+                face_data.append(embedding)
                 labels.append(target["name"])
+                
+                print(f"Successfully processed target: {target['name']}")
                 
             except Exception as e:
                 print(f"Error processing target image {target['path']}: {str(e)}")
@@ -83,21 +141,27 @@ class FaceVerification:
         if len(face_data) == 0:
             raise ValueError("No valid face data found in target images")
         
-        # Train KNN classifier
-        self.knn = KNeighborsClassifier(n_neighbors=1)
-        self.knn.fit(face_data, labels)
+        # Encode labels
+        self.le = LabelEncoder()
+        encoded_labels = self.le.fit_transform(labels)
         
-        # Store the face data and labels for distance calculation
+        # Use SVM classifier
+        self.classifier = SVC(kernel='linear', probability=True)
+        self.classifier.fit(face_data, encoded_labels)
+        
+        # Store the face data and labels for similarity calculation
         self.training_data = np.array(face_data)
         self.training_labels = np.array(labels)
 
     def verifyFace(self):
-        """Verify faces in screenshots using KNN"""
+        """Verify faces in screenshots using our improved model"""
         try:
             # Load screenshot data
             with open("screenshot_data.json") as f:
                 data = json.load(f)["screenshots"]
 
+            results = []
+            
             for screenshot in data:
                 if not screenshot["face_data"]:
                     continue
@@ -114,42 +178,96 @@ class FaceVerification:
                     try:
                         # Process the face image
                         img = cv2.imread(cropped_face_path)
-                        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                        if img is None:
+                            print(f"Could not read image: {cropped_face_path}")
+                            continue
                         
-                        # Resize and flatten
-                        resized_face = cv2.resize(gray, (50, 50)).flatten().reshape(1, -1)
+                        # Convert to RGB
+                        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                         
-                        # Predict using KNN
-                        predicted_label = self.knn.predict(resized_face)[0]
+                        # Detect face with MTCNN
+                        face_results = self.face_detector.detect_faces(img_rgb)
+                        if len(face_results) == 0:
+                            print(f"No face detected in {cropped_face_path}")
+                            continue
                         
-                        # Calculate distances to all training samples
-                        distances, indices = self.knn.kneighbors(resized_face)
+                        # Take the best face
+                        best_face = max(face_results, key=lambda x: x['confidence'])
+                        x, y, w, h = best_face['box']
                         
-                        # Get the closest distance
-                        min_distance = distances[0][0]
+                        # Ensure coordinates are within bounds
+                        x, y = max(0, x), max(0, y)
+                        w, h = min(w, img.shape[1] - x), min(h, img.shape[0] - y)
                         
-                        # Calculate similarity (inverse of distance)
-                        # Normalize distance to [0,1] range (you may need to adjust this)
-                        max_possible_distance = np.sqrt(50*50*255**2)  # Max possible Euclidean distance
-                        similarity = 1 - (min_distance / max_possible_distance)
+                        if w <= 0 or h <= 0:
+                            print(f"Invalid face dimensions in {cropped_face_path}")
+                            continue
                         
-                        # You can adjust this threshold based on your needs
-                        match_threshold = 0.7  # 60% similarity threshold
-                        is_match = similarity >= match_threshold
+                        face_img = img_rgb[y:y+h, x:x+w]
+                        
+                        # Get embedding
+                        embedding = self.get_face_embedding(face_img)
+                        if embedding is None:
+                            print(f"Could not generate embedding for {cropped_face_path}")
+                            continue
+                        
+                        embedding = embedding.reshape(1, -1)
+                        
+                        # Predict using SVM
+                        predictions = self.classifier.predict_proba(embedding)[0]
+                        best_class_indices = np.argmax(predictions)
+                        best_class_probability = predictions[best_class_indices]
+                        
+                        # Get the predicted label
+                        predicted_label = self.le.inverse_transform([best_class_indices])[0]
+                        
+                        # Calculate cosine similarity with all training samples
+                        similarities = cosine_similarity(embedding, self.training_data)
+                        max_similarity = np.max(similarities)
+                        
+                        # Thresholds
+                        identification_threshold = 0.6  # For recognizing known faces
+                        verification_threshold = 0.65    # For confirming identity
+                        
+                        is_recognized = best_class_probability > identification_threshold
+                        is_verified = max_similarity > verification_threshold
+                        
+                        result = {
+                            "face_path": cropped_face_path,
+                            "predicted_label": predicted_label,
+                            "confidence": float(best_class_probability),
+                            "max_similarity": float(max_similarity),
+                            "is_recognized": bool(is_recognized),
+                            "is_verified": bool(is_verified)
+                        }
+                        
+                        results.append(result)
                         
                         print(f"\nFace: {cropped_face_path}")
-                        print(f"Best match: {predicted_label}")
-                        print(f"Similarity: {similarity:.2%}")
-                        print(f"Distance: {min_distance:.4f}")
-                        print(f"Verified: {is_match}")
+                        print(f"Best match: {predicted_label} (confidence: {best_class_probability:.2%})")
+                        print(f"Max similarity with database: {max_similarity:.2%}")
+                        print(f"Recognized: {is_recognized}")
+                        print(f"Verified: {is_verified}")
 
                     except Exception as e:
                         print(f"Error processing {cropped_face_path}: {str(e)}")
                         continue
+            
+            return results
 
         except Exception as outer_e:
             print(f"Outer error: {str(outer_e)}")
+            return []
 
 
-face_verification = FaceVerification()
-face_verification.verifyFace()
+if __name__ == "__main__":
+    try:
+        face_verification = FaceVerification()
+        verification_results = face_verification.verifyFace()
+        
+        # Save results to JSON file
+        with open("verification_results.json", "w") as f:
+            json.dump(verification_results, f, indent=2)
+            
+    except Exception as e:
+        print(f"Failed to initialize face verification: {str(e)}")
