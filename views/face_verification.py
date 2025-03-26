@@ -1,15 +1,13 @@
 import os
 import json
 import cv2
-import numpy as np
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
-from sklearn.preprocessing import LabelEncoder
-import pickle
-from PIL import Image
 import mtcnn
-from facenet_pytorch import InceptionResnetV1
 import torch
+import numpy as np
+from PIL import Image
+from sklearn.svm import SVC
+from facenet_pytorch import InceptionResnetV1
+from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics.pairwise import cosine_similarity
 
 class FaceVerification:
