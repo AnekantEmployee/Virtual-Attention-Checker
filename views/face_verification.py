@@ -244,3 +244,4 @@ class FaceVerification:
         except Exception as outer_e:
             print(f"Outer error: {str(outer_e)}")
             return []
+
