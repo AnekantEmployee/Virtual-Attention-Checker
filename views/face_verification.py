@@ -220,7 +220,7 @@ class FaceVerification:
 
                     # Thresholds
                     identification_threshold = 0.6  # For recognizing known faces
-                    verification_threshold = 0.6  # For confirming identity
+                    verification_threshold = 0.5  # For confirming identity
 
                     is_recognized = best_class_probability > identification_threshold
                     is_verified = max_similarity > verification_threshold
@@ -244,4 +244,3 @@ class FaceVerification:
         except Exception as outer_e:
             print(f"Outer error: {str(outer_e)}")
             return []
-
