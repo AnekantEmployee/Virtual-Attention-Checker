@@ -7,7 +7,6 @@ import threading
 import pyautogui
 import imagehash
 import numpy as np
-from PIL import Image
 from datetime import datetime
 from .jsonencoder import JSONEncoder
 from .face_detector import FaceDetector
@@ -44,7 +43,7 @@ class ScreenshotManager:
                         elif os.path.isdir(file_path):
                             shutil.rmtree(file_path)
                     except Exception as e:
-                        print(f'Failed to delete {file_path}. Reason: {e}')
+                        print(f"Failed to delete {file_path}. Reason: {e}")
                 # Then remove the directory itself
                 shutil.rmtree(self.save_dir)
         except Exception as e:
