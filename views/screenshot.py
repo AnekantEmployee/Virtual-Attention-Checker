@@ -25,16 +25,35 @@ class ScreenshotManager:
         self.json_file = json_file
         self.interval = interval
 
-        # Clean up previous runs
-        if os.path.exists(self.json_file):
-            os.remove(self.json_file)
-        if os.path.exists(self.save_dir):
-            shutil.rmtree(self.save_dir)
+        # Clean up previous runs with error handling
+        try:
+            if os.path.exists(self.json_file):
+                os.remove(self.json_file)
+        except PermissionError:
+            print(f"Warning: Could not delete {self.json_file} - file in use")
 
-        # Create directories
-        os.makedirs(self.save_dir)
+        # More robust directory cleanup
+        try:
+            if os.path.exists(self.save_dir):
+                # Remove all contents first
+                for filename in os.listdir(self.save_dir):
+                    file_path = os.path.join(self.save_dir, filename)
+                    try:
+                        if os.path.isfile(file_path) or os.path.islink(file_path):
+                            os.unlink(file_path)
+                        elif os.path.isdir(file_path):
+                            shutil.rmtree(file_path)
+                    except Exception as e:
+                        print(f'Failed to delete {file_path}. Reason: {e}')
+                # Then remove the directory itself
+                shutil.rmtree(self.save_dir)
+        except Exception as e:
+            print(f"Warning: Could not delete {self.save_dir} - {str(e)}")
+
+        # Create directories with exist_ok=True to prevent errors if directory exists
+        os.makedirs(self.save_dir, exist_ok=True)
         self.faces_dir = os.path.join(self.save_dir, "faces")
-        os.makedirs(self.faces_dir)
+        os.makedirs(self.faces_dir, exist_ok=True)
 
         # Initialize face detector
         self.face_detector = FaceDetector()

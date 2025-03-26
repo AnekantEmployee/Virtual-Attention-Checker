@@ -1,8 +1,9 @@
 import time
+import streamlit as st
 from views import ScreenshotManager
 
 
-if __name__ == "__main__":
+def main():
     manager = ScreenshotManager(interval=1)
 
     try:
@@ -11,3 +12,7 @@ if __name__ == "__main__":
             time.sleep(1)
     except KeyboardInterrupt:
         manager.stop()
+
+
+if __name__ == "__main__":
+    main()

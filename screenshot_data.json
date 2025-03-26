@@ -2,132 +2,172 @@
     "screenshots": [
         {
             "id": 1,
-            "filename": "20250326_005814.png",
-            "timestamp": "2025-03-26 00:58:18",
-            "filepath": "screenshots\\20250326_005814.png",
+            "filename": "20250326_101609.png",
+            "timestamp": "2025-03-26 10:16:18",
+            "filepath": "screenshots\\20250326_101609.png",
             "same_as_previous": false,
-            "face_data": [
-                {
-                    "face_id": 1,
-                    "location": {
-                        "top": 468,
-                        "right": 1007,
-                        "bottom": 743,
-                        "left": 732
-                    },
-                    "cropped_face_path": "screenshots\\faces\\face_1_20250326_005818.png"
-                }
-            ]
+            "face_data": []
         },
         {
             "id": 2,
-            "filename": "20250326_005819.png",
-            "timestamp": "2025-03-26 00:58:22",
-            "filepath": "screenshots\\20250326_005819.png",
+            "filename": "20250326_101619.png",
+            "timestamp": "2025-03-26 10:16:24",
+            "filepath": "screenshots\\20250326_101619.png",
             "same_as_previous": false,
             "face_data": [
                 {
                     "face_id": 1,
                     "location": {
-                        "top": 384,
-                        "right": 448,
-                        "bottom": 823,
-                        "left": 9
+                        "top": 289,
+                        "right": 877,
+                        "bottom": 636,
+                        "left": 530
                     },
-                    "cropped_face_path": "screenshots\\faces\\face_1_20250326_005822.png"
+                    "cropped_face_path": "screenshots\\faces\\face_1_20250326_101624.png"
+                },
+                {
+                    "face_id": 2,
+                    "location": {
+                        "top": 343,
+                        "right": 1585,
+                        "bottom": 574,
+                        "left": 1354
+                    },
+                    "cropped_face_path": "screenshots\\faces\\face_2_20250326_101625.png"
                 }
             ]
         },
         {
             "id": 3,
-            "filename": "20250326_005824.png",
-            "timestamp": "2025-03-26 00:58:27",
-            "filepath": "screenshots\\20250326_005824.png",
+            "filename": "20250326_101626.png",
+            "timestamp": "2025-03-26 10:16:27",
+            "filepath": "screenshots\\20250326_101626.png",
             "same_as_previous": false,
-            "face_data": [
-                {
-                    "face_id": 1,
-                    "location": {
-                        "top": 278,
-                        "right": 1678,
-                        "bottom": 664,
-                        "left": 1292
-                    },
-                    "cropped_face_path": "screenshots\\faces\\face_1_20250326_005827.png"
-                },
-                {
-                    "face_id": 2,
-                    "location": {
-                        "top": 354,
-                        "right": 801,
-                        "bottom": 849,
-                        "left": 306
-                    },
-                    "cropped_face_path": "screenshots\\faces\\face_2_20250326_005827.png"
-                }
-            ]
+            "face_data": []
         },
         {
             "id": 4,
-            "filename": "20250326_005829.png",
-            "timestamp": "2025-03-26 00:58:32",
-            "filepath": "screenshots\\20250326_005829.png",
-            "same_as_previous": false,
-            "face_data": [
-                {
-                    "face_id": 1,
-                    "location": {
-                        "top": 164,
-                        "right": 1721,
-                        "bottom": 705,
-                        "left": 1180
-                    },
-                    "cropped_face_path": "screenshots\\faces\\face_1_20250326_005832.png"
-                }
-            ]
+            "filename": "20250326_101628.png",
+            "timestamp": "2025-03-26 10:16:28",
+            "filepath": "screenshots\\20250326_101628.png",
+            "same_as_previous": true,
+            "face_data": []
         },
         {
             "id": 5,
-            "filename": "20250326_005834.png",
-            "timestamp": "2025-03-26 00:58:38",
-            "filepath": "screenshots\\20250326_005834.png",
+            "filename": "20250326_101629.png",
+            "timestamp": "2025-03-26 10:16:30",
+            "filepath": "screenshots\\20250326_101629.png",
+            "same_as_previous": true,
+            "face_data": []
+        },
+        {
+            "id": 6,
+            "filename": "20250326_101631.png",
+            "timestamp": "2025-03-26 10:16:32",
+            "filepath": "screenshots\\20250326_101631.png",
+            "same_as_previous": false,
+            "face_data": []
+        },
+        {
+            "id": 7,
+            "filename": "20250326_101633.png",
+            "timestamp": "2025-03-26 10:16:34",
+            "filepath": "screenshots\\20250326_101633.png",
+            "same_as_previous": true,
+            "face_data": []
+        },
+        {
+            "id": 8,
+            "filename": "20250326_101635.png",
+            "timestamp": "2025-03-26 10:16:36",
+            "filepath": "screenshots\\20250326_101635.png",
+            "same_as_previous": true,
+            "face_data": []
+        },
+        {
+            "id": 9,
+            "filename": "20250326_101637.png",
+            "timestamp": "2025-03-26 10:16:41",
+            "filepath": "screenshots\\20250326_101637.png",
             "same_as_previous": false,
             "face_data": [
                 {
                     "face_id": 1,
                     "location": {
-                        "top": 271,
-                        "right": 1585,
-                        "bottom": 633,
-                        "left": 1223
+                        "top": 950,
+                        "right": 491,
+                        "bottom": 1013,
+                        "left": 428
                     },
-                    "cropped_face_path": "screenshots\\faces\\face_1_20250326_005838.png"
+                    "cropped_face_path": "screenshots\\faces\\face_1_20250326_101641.png"
                 },
                 {
                     "face_id": 2,
                     "location": {
-                        "top": 345,
-                        "right": 625,
-                        "bottom": 798,
-                        "left": 172
+                        "top": 466,
+                        "right": 1916,
+                        "bottom": 575,
+                        "left": 1807
                     },
-                    "cropped_face_path": "screenshots\\faces\\face_2_20250326_005838.png"
+                    "cropped_face_path": "screenshots\\faces\\face_2_20250326_101641.png"
+                },
+                {
+                    "face_id": 3,
+                    "location": {
+                        "top": 374,
+                        "right": 1022,
+                        "bottom": 644,
+                        "left": 752
+                    },
+                    "cropped_face_path": "screenshots\\faces\\face_3_20250326_101641.png"
                 }
             ]
         },
         {
-            "id": 6,
-            "filename": "20250326_005839.png",
-            "timestamp": "2025-03-26 00:58:40",
-            "filepath": "screenshots\\20250326_005839.png",
+            "id": 10,
+            "filename": "20250326_101642.png",
+            "timestamp": "2025-03-26 10:16:45",
+            "filepath": "screenshots\\20250326_101642.png",
             "same_as_previous": false,
-            "face_data": []
+            "face_data": [
+                {
+                    "face_id": 1,
+                    "location": {
+                        "top": 347,
+                        "right": 542,
+                        "bottom": 637,
+                        "left": 252
+                    },
+                    "cropped_face_path": "screenshots\\faces\\face_1_20250326_101645.png"
+                },
+                {
+                    "face_id": 2,
+                    "location": {
+                        "top": 321,
+                        "right": 1131,
+                        "bottom": 728,
+                        "left": 724
+                    },
+                    "cropped_face_path": "screenshots\\faces\\face_2_20250326_101646.png"
+                },
+                {
+                    "face_id": 3,
+                    "location": {
+                        "top": 373,
+                        "right": 1585,
+                        "bottom": 626,
+                        "left": 1332
+                    },
+                    "cropped_face_path": "screenshots\\faces\\face_3_20250326_101646.png"
+                }
+            ]
         }
     ],
-    "total_count": 6,
-    "start_time": "2025-03-26 00:58:14",
+    "total_count": 10,
+    "start_time": "2025-03-26 10:16:09",
     "cumulative_stats": {
-        "total_faces": 7
+        "total_faces": 8
     },
     "settings": {
         "interval": 1,
