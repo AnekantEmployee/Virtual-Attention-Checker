@@ -1,17 +1,17 @@
 import os
-import json
 import cv2
+import time
+import json
 import mtcnn
 import torch
+import shutil
 import numpy as np
 from PIL import Image
 from sklearn.svm import SVC
+from datetime import datetime
 from facenet_pytorch import InceptionResnetV1
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics.pairwise import cosine_similarity
-import time
-from datetime import datetime
-import shutil
 
 
 class FaceVerification:
@@ -21,15 +21,27 @@ class FaceVerification:
 
         # Initialize FaceNet for face embeddings
         self.resnet = InceptionResnetV1(pretrained="vggface2").eval()
+        self.faces_data = []
 
         # Create directories for verified faces
         self.faces_dir = "faces"
         self.faces_json_path = os.path.join(self.faces_dir, "verified_faces.json")
 
-        # Ensure directories exist
-        os.makedirs(self.faces_dir, exist_ok=True)
+        if os.path.exists(self.faces_dir):
+            try:
+                shutil.rmtree(self.faces_dir)
+            except FileNotFoundError:
+                try:
+                    os.rmdir(self.faces_dir)
+                except FileNotFoundError as e:
+                    print(e)
+                    pass
+        os.makedirs(self.faces_dir)
 
         # Initialize JSON file if it doesn't exist
+        if os.path.exists(self.faces_json_path):
+            os.remove(self.faces_json_path)
+
         if not os.path.exists(self.faces_json_path):
             with open(self.faces_json_path, "w") as f:
                 json.dump([], f)
@@ -166,136 +178,116 @@ class FaceVerification:
         self.training_data = np.array(face_data)
         self.training_labels = np.array(labels)
 
-    def verifyFace(self, screenshot):
-        """Verify faces in screenshots using our improved model"""
+    def verifyFace(self, face_data_pil):
+        """Verify faces from PIL Image using our improved model"""
         try:
-            if not screenshot["face_data"]:
-                return
-
-            result = []
             current_time = datetime.now().isoformat()
-            screenshot_id = screenshot.get(
-                "id", str(int(time.time()))
-            )  # Use provided ID or timestamp
+            face_id = f"{int(time.time() * 1000)}"  # Generate a unique face ID
 
-            for face in screenshot["face_data"]:
-                cropped_face_path = face["cropped_face_path"]
+            try:
+                # Convert PIL Image to numpy array
+                img_rgb = np.array(face_data_pil)
 
-                # Check if face image is valid
-                valid, msg = self.is_valid_image(cropped_face_path)
-                if not valid:
-                    print(f"Skipping {cropped_face_path}: {msg}")
-                    return
+                # Handle different image modes
+                if img_rgb.ndim == 2:  # Convert grayscale to RGB
+                    img_rgb = cv2.cvtColor(img_rgb, cv2.COLOR_GRAY2RGB)
+                elif img_rgb.shape[2] == 4:  # Convert RGBA to RGB
+                    img_rgb = cv2.cvtColor(img_rgb, cv2.COLOR_RGBA2RGB)
 
-                try:
-                    # Process the face image
-                    img = cv2.imread(cropped_face_path)
-                    if img is None:
-                        print(f"Could not read image: {cropped_face_path}")
-                        continue
+                # Detect face with MTCNN
+                face_results = self.face_detector.detect_faces(img_rgb)
+                if len(face_results) == 0:
+                    print("No face detected in the provided image")
+                    return {}
 
-                    # Convert to RGB
-                    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                # Take the best face
+                best_face = max(face_results, key=lambda x: x["confidence"])
+                x, y, w, h = best_face["box"]
 
-                    # Detect face with MTCNN
-                    face_results = self.face_detector.detect_faces(img_rgb)
-                    if len(face_results) == 0:
-                        print(f"No face detected in {cropped_face_path}")
-                        continue
+                # Ensure coordinates are within bounds
+                height, width = img_rgb.shape[:2]
+                x, y = max(0, x), max(0, y)
+                w, h = min(w, width - x), min(h, height - y)
 
-                    # Take the best face
-                    best_face = max(face_results, key=lambda x: x["confidence"])
-                    x, y, w, h = best_face["box"]
+                if w <= 0 or h <= 0:
+                    print("Invalid face dimensions in the provided image")
+                    return {}
 
-                    # Ensure coordinates are within bounds
-                    x, y = max(0, x), max(0, y)
-                    w, h = min(w, img.shape[1] - x), min(h, img.shape[0] - y)
+                face_img = img_rgb[y : y + h, x : x + w]
 
-                    if w <= 0 or h <= 0:
-                        print(f"Invalid face dimensions in {cropped_face_path}")
-                        continue
+                # Get embedding
+                embedding = self.get_face_embedding(face_img)
+                if embedding is None:
+                    print("Could not generate embedding for the face")
+                    return {}
 
-                    face_img = img_rgb[y : y + h, x : x + w]
+                embedding = embedding.reshape(1, -1)
 
-                    # Get embedding
-                    embedding = self.get_face_embedding(face_img)
-                    if embedding is None:
-                        print(f"Could not generate embedding for {cropped_face_path}")
-                        continue
+                # Calculate cosine similarity with all training samples
+                similarities = cosine_similarity(embedding, self.training_data)
+                max_similarity = np.max(similarities)
 
-                    embedding = embedding.reshape(1, -1)
+                # Thresholds
+                verification_threshold = 0.5  # For confirming identity
+                is_verified = max_similarity > verification_threshold
 
-                    # Predict using SVM
-                    predictions = self.classifier.predict_proba(embedding)[0]
-                    best_class_indices = np.argmax(predictions)
-                    best_class_probability = predictions[best_class_indices]
+                # Save the verified face
+                face_filename = f"face_{face_id}.jpg"
+                verified_face_path = os.path.join(self.faces_dir, face_filename)
 
-                    # Get the predicted label
-                    predicted_label = self.le.inverse_transform([best_class_indices])[0]
-
-                    # Calculate cosine similarity with all training samples
-                    similarities = cosine_similarity(embedding, self.training_data)
-                    max_similarity = np.max(similarities)
-
-                    # Thresholds
-                    identification_threshold = 0.6  # For recognizing known faces
-                    verification_threshold = 0.5  # For confirming identity
-
-                    is_recognized = best_class_probability > identification_threshold
-                    is_verified = max_similarity > verification_threshold
-
-                    # Generate a unique face ID
-                    face_id = f"{screenshot_id}_{int(time.time() * 1000)}"
-
-                    # Create new filename for the verified face
-                    face_filename = f"face_{face_id}.jpg"
-                    verified_face_path = os.path.join(self.faces_dir, face_filename)
+                # If verified, append to JSON
+                if is_verified:
+                    verified_face_pil = Image.fromarray(face_img)
+                    verified_face_pil.save(verified_face_path)
 
                     result_temp = {
                         "face_path": verified_face_path,
                         "face_id": face_id,
-                        "screenshot_id": screenshot_id,
                         "timestamp": current_time,
+                        "is_verified": is_verified,
                     }
+                    print(result_temp)
+                    self._append_to_verified_faces(result_temp)
 
-                    result.append(result_temp)
+            except Exception as e:
+                print(f"Error processing face image: {str(e)}")
+                return []
 
-                    # If verified, save the face image and append to JSON
-                    if is_verified:
-                        # Save the face image
-                        cv2.imwrite(
-                            verified_face_path,
-                            cv2.cvtColor(face_img, cv2.COLOR_RGB2BGR),
-                        )
-                        # Append to JSON file
-                        self._append_to_verified_faces(result_temp)
-
-                except Exception as e:
-                    print(f"Error processing {cropped_face_path}: {str(e)}")
-                    continue
-                finally:
-                    os.remove(cropped_face_path)
-
-            return result
         except Exception as outer_e:
             print(f"Outer error: {str(outer_e)}")
             return []
 
     def _append_to_verified_faces(self, face_data):
-        """Append verified face data to JSON file"""
+        """Append verified face data to JSON file with improved error handling."""
         try:
-            # Read existing data
-            existing_data = []
-            if os.path.exists(self.faces_json_path):
-                with open(self.faces_json_path, "r") as f:
-                    existing_data = json.load(f)
+            self.faces_data.append(face_data)
 
-            # Append new data
-            existing_data.append(face_data)
+            try:
+                # Create a temporary file
+                temp_file_path = self.faces_json_path + ".temp"
 
-            # Write back to file
-            with open(self.faces_json_path, "w") as f:
-                json.dump(existing_data, f, indent=2)
+                with open(temp_file_path, "w") as temp_file:
+                    json.dump(self.faces_data, temp_file, indent=2)
+
+                # Rename the temporary file to the final JSON file
+                os.rename(temp_file_path, self.faces_json_path)
+
+                print(
+                    f"Successfully saved data to {self.faces_json_path}"
+                )  # Add this print
+
+            except Exception as json_write_error:
+                print(f"Error writing to JSON file: {json_write_error}")
+                if os.path.exists(temp_file_path):  # Debugging
+                    print(f"Temporary file {temp_file_path} exists.")
+                else:
+                    print(f"Temporary file {temp_file_path} does not exist.")
+
+                try:
+                    with open(self.faces_json_path, "r") as f:
+                        print(f"Current content of json: {f.read()}")  # Debug
+                except:
+                    print("Could not read the json file for debug")
 
         except Exception as e:
             print(f"Error saving verified face data: {str(e)}")

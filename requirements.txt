@@ -1,5 +1,4 @@
 facenet_pytorch==2.6.0
-ImageHash==4.3.1
 mediapipe==0.10.14
 mtcnn==1.0.0
 numpy==2.2.4

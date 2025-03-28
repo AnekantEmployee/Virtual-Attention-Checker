@@ -1,9 +1,8 @@
-import os
 import cv2
 import numpy as np
 from PIL import Image
-from datetime import datetime
 import mediapipe as mp
+from .face_verification import FaceVerification
 
 
 class FaceDetector:
@@ -17,6 +16,8 @@ class FaceDetector:
             model_selection=1,  # 0 for short-range, 1 for full-range
             min_detection_confidence=0.5,
         )
+
+        self.face_verification = FaceVerification()
 
     def detect_faces(self, image):
         """
@@ -61,10 +62,9 @@ class FaceDetector:
 
                 face_locations.append((top, right, bottom, left))
 
-        # os.remove(image_path)
-        return self._prepare_face_results(face_locations)
+        return self._prepare_face_results(face_locations, image)
 
-    def _prepare_face_results(self, face_locations):
+    def _prepare_face_results(self, face_locations, image):
         """Prepare face detection results with additional validation"""
         validated_locations = []
 
@@ -79,30 +79,10 @@ class FaceDetector:
             if 0.6 <= aspect_ratio <= 1.6:
                 validated_locations.append(location)
 
-        results = {
-            "total_faces": len(validated_locations),
-            "faces": [],
-        }
+        for location in validated_locations:
+            self.save_face(image, location)
 
-        for i, location in enumerate(validated_locations):
-            face_result = {
-                "id": i + 1,
-                "location": location,
-            }
-            results["faces"].append(face_result)
-
-        return results
-
-    def save_face(self, image, face_location, save_dir, prefix="face"):
-        """
-        Save a cropped face from the image with improved validation.
-
-        :param image: PIL Image or numpy array
-        :param face_location: Tuple of face location (top, right, bottom, left)
-        :param save_dir: Directory to save the face
-        :param prefix: Prefix for the filename
-        :return: Path to the saved face image or None if invalid
-        """
+    def save_face(self, image, face_location):
         # Convert PIL Image to numpy array if needed
         if isinstance(image, Image.Image):
             image = np.array(image)
@@ -138,11 +118,5 @@ class FaceDetector:
             cv2.cvtColor(cropped_face, cv2.COLOR_BGR2RGB)
         )
 
-        # Generate filename
-        filename = f"{prefix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-        filepath = os.path.join(save_dir, filename)
-
-        # Save the cropped face
-        cropped_face_pil.save(filepath)
-
-        return filepath
+        result = self.face_verification.verifyFace(cropped_face_pil)
+        return result
