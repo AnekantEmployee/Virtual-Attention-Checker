@@ -9,6 +9,9 @@ from sklearn.svm import SVC
 from facenet_pytorch import InceptionResnetV1
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics.pairwise import cosine_similarity
+import time
+from datetime import datetime
+import shutil
 
 
 class FaceVerification:
@@ -18,6 +21,18 @@ class FaceVerification:
 
         # Initialize FaceNet for face embeddings
         self.resnet = InceptionResnetV1(pretrained="vggface2").eval()
+
+        # Create directories for verified faces
+        self.faces_dir = "faces"
+        self.faces_json_path = os.path.join(self.faces_dir, "verified_faces.json")
+
+        # Ensure directories exist
+        os.makedirs(self.faces_dir, exist_ok=True)
+
+        # Initialize JSON file if it doesn't exist
+        if not os.path.exists(self.faces_json_path):
+            with open(self.faces_json_path, "w") as f:
+                json.dump([], f)
 
         # Load target images and train model
         target_dir = "target_img"
@@ -158,6 +173,10 @@ class FaceVerification:
                 return
 
             result = []
+            current_time = datetime.now().isoformat()
+            screenshot_id = screenshot.get(
+                "id", str(int(time.time()))
+            )  # Use provided ID or timestamp
 
             for face in screenshot["face_data"]:
                 cropped_face_path = face["cropped_face_path"]
@@ -225,22 +244,58 @@ class FaceVerification:
                     is_recognized = best_class_probability > identification_threshold
                     is_verified = max_similarity > verification_threshold
 
+                    # Generate a unique face ID
+                    face_id = f"{screenshot_id}_{int(time.time() * 1000)}"
+
+                    # Create new filename for the verified face
+                    face_filename = f"face_{face_id}.jpg"
+                    verified_face_path = os.path.join(self.faces_dir, face_filename)
+
                     result_temp = {
-                        "face_path": cropped_face_path,
-                        "predicted_label": predicted_label,
-                        "confidence": float(best_class_probability),
-                        "max_similarity": float(max_similarity),
-                        "is_recognized": bool(is_recognized),
-                        "is_verified": bool(is_verified),
+                        "face_path": verified_face_path,
+                        "face_id": face_id,
+                        "screenshot_id": screenshot_id,
+                        "timestamp": current_time,
                     }
 
                     result.append(result_temp)
 
+                    # If verified, save the face image and append to JSON
+                    if is_verified:
+                        # Save the face image
+                        cv2.imwrite(
+                            verified_face_path,
+                            cv2.cvtColor(face_img, cv2.COLOR_RGB2BGR),
+                        )
+                        # Append to JSON file
+                        self._append_to_verified_faces(result_temp)
+
                 except Exception as e:
                     print(f"Error processing {cropped_face_path}: {str(e)}")
                     continue
+                finally:
+                    os.remove(cropped_face_path)
 
             return result
         except Exception as outer_e:
             print(f"Outer error: {str(outer_e)}")
             return []
+
+    def _append_to_verified_faces(self, face_data):
+        """Append verified face data to JSON file"""
+        try:
+            # Read existing data
+            existing_data = []
+            if os.path.exists(self.faces_json_path):
+                with open(self.faces_json_path, "r") as f:
+                    existing_data = json.load(f)
+
+            # Append new data
+            existing_data.append(face_data)
+
+            # Write back to file
+            with open(self.faces_json_path, "w") as f:
+                json.dump(existing_data, f, indent=2)
+
+        except Exception as e:
+            print(f"Error saving verified face data: {str(e)}")

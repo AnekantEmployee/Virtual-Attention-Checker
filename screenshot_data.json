@@ -2,347 +2,234 @@
     "screenshots": [
         {
             "id": 1,
-            "filename": "20250328_170656.png",
-            "timestamp": "2025-03-28 17:06:57",
-            "filepath": "screenshots\\20250328_170656.png",
-            "same_as_previous": false,
+            "timestamp": "2025-03-28 20:47:16",
             "face_data": [],
             "verification_data": null
         },
         {
             "id": 2,
-            "filename": "20250328_170658.png",
-            "timestamp": "2025-03-28 17:06:59",
-            "filepath": "screenshots\\20250328_170658.png",
-            "same_as_previous": false,
-            "face_data": [],
-            "verification_data": null
-        },
-        {
-            "id": 3,
-            "filename": "20250328_170700.png",
-            "timestamp": "2025-03-28 17:07:01",
-            "filepath": "screenshots\\20250328_170700.png",
-            "same_as_previous": false,
+            "timestamp": "2025-03-28 20:47:17",
             "face_data": [
                 {
                     "face_id": 1,
-                    "location": {
-                        "top": 369,
-                        "right": 1124,
-                        "bottom": 756,
-                        "left": 737
-                    },
-                    "cropped_face_path": "screenshots\\faces\\face_1_20250328_170701.png"
+                    "cropped_face_path": "screenshots\\faces\\face_1_20250328_204717.png"
                 }
             ],
             "verification_data": [
                 {
-                    "face_path": "screenshots\\faces\\face_1_20250328_170701.png",
-                    "predicted_label": "photo2",
-                    "confidence": 0.2109144017573798,
-                    "max_similarity": 0.6071046590805054,
-                    "is_recognized": false,
-                    "is_verified": true
+                    "face_path": "faces\\face_2_1743175037675.jpg",
+                    "face_id": "2_1743175037675",
+                    "screenshot_id": 2,
+                    "timestamp": "2025-03-28T20:47:17.027977"
                 }
             ]
         },
         {
+            "id": 3,
+            "timestamp": "2025-03-28 20:47:17",
+            "face_data": [],
+            "verification_data": null
+        },
+        {
             "id": 4,
-            "filename": "20250328_170703.png",
-            "timestamp": "2025-03-28 17:07:03",
-            "filepath": "screenshots\\20250328_170703.png",
-            "same_as_previous": false,
+            "timestamp": "2025-03-28 20:47:17",
             "face_data": [],
             "verification_data": null
         },
         {
             "id": 5,
-            "filename": "20250328_170704.png",
-            "timestamp": "2025-03-28 17:07:05",
-            "filepath": "screenshots\\20250328_170704.png",
-            "same_as_previous": false,
+            "timestamp": "2025-03-28 20:47:18",
             "face_data": [],
             "verification_data": null
         },
         {
             "id": 6,
-            "filename": "20250328_170706.png",
-            "timestamp": "2025-03-28 17:07:06",
-            "filepath": "screenshots\\20250328_170706.png",
-            "same_as_previous": true,
+            "timestamp": "2025-03-28 20:47:18",
             "face_data": [],
             "verification_data": null
         },
         {
             "id": 7,
-            "filename": "20250328_170707.png",
-            "timestamp": "2025-03-28 17:07:07",
-            "filepath": "screenshots\\20250328_170707.png",
-            "same_as_previous": true,
+            "timestamp": "2025-03-28 20:47:18",
             "face_data": [],
             "verification_data": null
         },
         {
             "id": 8,
-            "filename": "20250328_170708.png",
-            "timestamp": "2025-03-28 17:07:09",
-            "filepath": "screenshots\\20250328_170708.png",
-            "same_as_previous": true,
-            "face_data": [],
-            "verification_data": null
+            "timestamp": "2025-03-28 20:47:18",
+            "face_data": [
+                {
+                    "face_id": 1,
+                    "cropped_face_path": "screenshots\\faces\\face_1_20250328_204718.png"
+                }
+            ],
+            "verification_data": [
+                {
+                    "face_path": "faces\\face_8_1743175038666.jpg",
+                    "face_id": "8_1743175038666",
+                    "screenshot_id": 8,
+                    "timestamp": "2025-03-28T20:47:18.475695"
+                }
+            ]
         },
         {
             "id": 9,
-            "filename": "20250328_170710.png",
-            "timestamp": "2025-03-28 17:07:10",
-            "filepath": "screenshots\\20250328_170710.png",
-            "same_as_previous": true,
-            "face_data": [],
-            "verification_data": null
+            "timestamp": "2025-03-28 20:47:18",
+            "face_data": [
+                {
+                    "face_id": 1,
+                    "cropped_face_path": "screenshots\\faces\\face_1_20250328_204718.png"
+                },
+                {
+                    "face_id": 2,
+                    "cropped_face_path": "screenshots\\faces\\face_2_20250328_204718.png"
+                }
+            ],
+            "verification_data": [
+                {
+                    "face_path": "faces\\face_9_1743175039101.jpg",
+                    "face_id": "9_1743175039101",
+                    "screenshot_id": 9,
+                    "timestamp": "2025-03-28T20:47:18.779368"
+                }
+            ]
         },
         {
             "id": 10,
-            "filename": "20250328_170711.png",
-            "timestamp": "2025-03-28 17:07:11",
-            "filepath": "screenshots\\20250328_170711.png",
-            "same_as_previous": true,
-            "face_data": [],
-            "verification_data": null
+            "timestamp": "2025-03-28 20:47:19",
+            "face_data": [
+                {
+                    "face_id": 1,
+                    "cropped_face_path": "screenshots\\faces\\face_1_20250328_204719.png"
+                }
+            ],
+            "verification_data": []
         },
         {
             "id": 11,
-            "filename": "20250328_170712.png",
-            "timestamp": "2025-03-28 17:07:13",
-            "filepath": "screenshots\\20250328_170712.png",
-            "same_as_previous": false,
-            "face_data": [],
-            "verification_data": null
+            "timestamp": "2025-03-28 20:47:19",
+            "face_data": [
+                {
+                    "face_id": 1,
+                    "cropped_face_path": "screenshots\\faces\\face_1_20250328_204719.png"
+                }
+            ],
+            "verification_data": [
+                {
+                    "face_path": "faces\\face_11_1743175039686.jpg",
+                    "face_id": "11_1743175039686",
+                    "screenshot_id": 11,
+                    "timestamp": "2025-03-28T20:47:19.458243"
+                }
+            ]
         },
         {
             "id": 12,
-            "filename": "20250328_170714.png",
-            "timestamp": "2025-03-28 17:07:14",
-            "filepath": "screenshots\\20250328_170714.png",
-            "same_as_previous": true,
+            "timestamp": "2025-03-28 20:47:19",
             "face_data": [],
             "verification_data": null
         },
         {
             "id": 13,
-            "filename": "20250328_170715.png",
-            "timestamp": "2025-03-28 17:07:15",
-            "filepath": "screenshots\\20250328_170715.png",
-            "same_as_previous": true,
-            "face_data": [],
-            "verification_data": null
-        },
-        {
-            "id": 14,
-            "filename": "20250328_170716.png",
-            "timestamp": "2025-03-28 17:07:18",
-            "filepath": "screenshots\\20250328_170716.png",
-            "same_as_previous": false,
+            "timestamp": "2025-03-28 20:47:19",
             "face_data": [
                 {
                     "face_id": 1,
-                    "location": {
-                        "top": 317,
-                        "right": 840,
-                        "bottom": 731,
-                        "left": 426
-                    },
-                    "cropped_face_path": "screenshots\\faces\\face_1_20250328_170718.png"
-                },
-                {
-                    "face_id": 2,
-                    "location": {
-                        "top": 237,
-                        "right": 1371,
-                        "bottom": 617,
-                        "left": 991
-                    },
-                    "cropped_face_path": "screenshots\\faces\\face_2_20250328_170718.png"
+                    "cropped_face_path": "screenshots\\faces\\face_1_20250328_204719.png"
                 }
             ],
             "verification_data": [
                 {
-                    "face_path": "screenshots\\faces\\face_1_20250328_170718.png",
-                    "predicted_label": "photo2",
-                    "confidence": 0.21471298234785335,
-                    "max_similarity": 0.6996699571609497,
-                    "is_recognized": false,
-                    "is_verified": true
-                },
+                    "face_path": "faces\\face_13_1743175040158.jpg",
+                    "face_id": "13_1743175040158",
+                    "screenshot_id": 13,
+                    "timestamp": "2025-03-28T20:47:19.917946"
+                }
+            ]
+        },
+        {
+            "id": 14,
+            "timestamp": "2025-03-28 20:47:20",
+            "face_data": [
                 {
-                    "face_path": "screenshots\\faces\\face_2_20250328_170718.png",
-                    "predicted_label": "IMG_0057",
-                    "confidence": 0.18655228960266246,
-                    "max_similarity": 0.3324931859970093,
-                    "is_recognized": false,
-                    "is_verified": false
+                    "face_id": 1,
+                    "cropped_face_path": "screenshots\\faces\\face_1_20250328_204720.png"
+                }
+            ],
+            "verification_data": [
+                {
+                    "face_path": "faces\\face_14_1743175040509.jpg",
+                    "face_id": "14_1743175040509",
+                    "screenshot_id": 14,
+                    "timestamp": "2025-03-28T20:47:20.294528"
                 }
             ]
         },
         {
             "id": 15,
-            "filename": "20250328_170721.png",
-            "timestamp": "2025-03-28 17:07:22",
-            "filepath": "screenshots\\20250328_170721.png",
-            "same_as_previous": false,
+            "timestamp": "2025-03-28 20:47:20",
             "face_data": [
                 {
                     "face_id": 1,
-                    "location": {
-                        "top": 339,
-                        "right": 866,
-                        "bottom": 705,
-                        "left": 500
-                    },
-                    "cropped_face_path": "screenshots\\faces\\face_1_20250328_170722.png"
+                    "cropped_face_path": "screenshots\\faces\\face_1_20250328_204720.png"
+                },
+                {
+                    "face_id": 2,
+                    "cropped_face_path": "screenshots\\faces\\face_2_20250328_204720.png"
                 }
             ],
             "verification_data": [
                 {
-                    "face_path": "screenshots\\faces\\face_1_20250328_170722.png",
-                    "predicted_label": "photo2",
-                    "confidence": 0.18412429974561093,
-                    "max_similarity": 0.45727333426475525,
-                    "is_recognized": false,
-                    "is_verified": false
+                    "face_path": "faces\\face_15_1743175040943.jpg",
+                    "face_id": "15_1743175040943",
+                    "screenshot_id": 15,
+                    "timestamp": "2025-03-28T20:47:20.688564"
+                },
+                {
+                    "face_path": "faces\\face_15_1743175041181.jpg",
+                    "face_id": "15_1743175041181",
+                    "screenshot_id": 15,
+                    "timestamp": "2025-03-28T20:47:20.688564"
                 }
             ]
         },
         {
             "id": 16,
-            "filename": "20250328_170724.png",
-            "timestamp": "2025-03-28 17:07:26",
-            "filepath": "screenshots\\20250328_170724.png",
-            "same_as_previous": false,
+            "timestamp": "2025-03-28 20:47:21",
             "face_data": [
                 {
                     "face_id": 1,
-                    "location": {
-                        "top": 320,
-                        "right": 980,
-                        "bottom": 719,
-                        "left": 581
-                    },
-                    "cropped_face_path": "screenshots\\faces\\face_1_20250328_170726.png"
+                    "cropped_face_path": "screenshots\\faces\\face_1_20250328_204721.png"
                 },
                 {
                     "face_id": 2,
-                    "location": {
-                        "top": 129,
-                        "right": 1317,
-                        "bottom": 350,
-                        "left": 1096
-                    },
-                    "cropped_face_path": "screenshots\\faces\\face_2_20250328_170727.png"
-                },
-                {
-                    "face_id": 3,
-                    "location": {
-                        "top": 176,
-                        "right": 1649,
-                        "bottom": 421,
-                        "left": 1404
-                    },
-                    "cropped_face_path": "screenshots\\faces\\face_3_20250328_170727.png"
+                    "cropped_face_path": "screenshots\\faces\\face_2_20250328_204721.png"
                 }
             ],
             "verification_data": [
                 {
-                    "face_path": "screenshots\\faces\\face_1_20250328_170726.png",
-                    "predicted_label": "photo2",
-                    "confidence": 0.2065243968077486,
-                    "max_similarity": 0.6939429640769958,
-                    "is_recognized": false,
-                    "is_verified": true
+                    "face_path": "faces\\face_16_1743175041604.jpg",
+                    "face_id": "16_1743175041604",
+                    "screenshot_id": 16,
+                    "timestamp": "2025-03-28T20:47:21.333619"
                 },
                 {
-                    "face_path": "screenshots\\faces\\face_2_20250328_170727.png",
-                    "predicted_label": "IMG_1373",
-                    "confidence": 0.18273704378103584,
-                    "max_similarity": 0.2962704300880432,
-                    "is_recognized": false,
-                    "is_verified": false
-                }
-            ]
-        },
-        {
-            "id": 17,
-            "filename": "20250328_170729.png",
-            "timestamp": "2025-03-28 17:07:31",
-            "filepath": "screenshots\\20250328_170729.png",
-            "same_as_previous": false,
-            "face_data": [
-                {
-                    "face_id": 1,
-                    "location": {
-                        "top": 324,
-                        "right": 889,
-                        "bottom": 716,
-                        "left": 497
-                    },
-                    "cropped_face_path": "screenshots\\faces\\face_1_20250328_170731.png"
-                },
-                {
-                    "face_id": 2,
-                    "location": {
-                        "top": 249,
-                        "right": 1679,
-                        "bottom": 562,
-                        "left": 1366
-                    },
-                    "cropped_face_path": "screenshots\\faces\\face_2_20250328_170731.png"
-                },
-                {
-                    "face_id": 3,
-                    "location": {
-                        "top": 277,
-                        "right": 1255,
-                        "bottom": 578,
-                        "left": 954
-                    },
-                    "cropped_face_path": "screenshots\\faces\\face_3_20250328_170731.png"
-                }
-            ],
-            "verification_data": [
-                {
-                    "face_path": "screenshots\\faces\\face_1_20250328_170731.png",
-                    "predicted_label": "photo2",
-                    "confidence": 0.2346748520259445,
-                    "max_similarity": 0.7244997620582581,
-                    "is_recognized": false,
-                    "is_verified": true
-                },
-                {
-                    "face_path": "screenshots\\faces\\face_2_20250328_170731.png",
-                    "predicted_label": "IMG_0057",
-                    "confidence": 0.19309157157736187,
-                    "max_similarity": 0.33731234073638916,
-                    "is_recognized": false,
-                    "is_verified": false
-                },
-                {
-                    "face_path": "screenshots\\faces\\face_3_20250328_170731.png",
-                    "predicted_label": "IMG_0234",
-                    "confidence": 0.18852441004574097,
-                    "max_similarity": 0.2794288992881775,
-                    "is_recognized": false,
-                    "is_verified": false
+                    "face_path": "faces\\face_16_1743175041796.jpg",
+                    "face_id": "16_1743175041796",
+                    "screenshot_id": 16,
+                    "timestamp": "2025-03-28T20:47:21.333619"
                 }
             ]
         }
     ],
-    "total_count": 17,
-    "start_time": "2025-03-28 17:05:21",
+    "total_count": 16,
+    "start_time": "2025-03-28 20:47:12",
     "cumulative_stats": {
-        "total_faces": 10
+        "total_faces": 12
     },
     "settings": {
         "interval": 1,
-        "save_directory": "screenshots"
+        "save_directory": "screenshots",
+        "mode": "training"
     }
 }

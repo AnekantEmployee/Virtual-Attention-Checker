@@ -5,8 +5,8 @@ import time
 import shutil
 import threading
 import pyautogui
-import imagehash
 import numpy as np
+from PIL import Image
 from datetime import datetime
 from .jsonencoder import JSONEncoder
 from .face_detector import FaceDetector
@@ -19,11 +19,18 @@ class ScreenshotManager:
         save_dir="screenshots",
         json_file="screenshot_data.json",
         interval=1,
+        mode="training",  # "testing" or "training"
+        training_video="D:\DS Project\Face Recoginition Meeting\meeting_recoding.avi",
     ):
         """Initialize the screenshot manager."""
         self.save_dir = save_dir
         self.json_file = json_file
         self.interval = interval
+        self.mode = mode
+        self.training_video = training_video
+        self.video_capture = None
+        self.video_fps = None
+        self.frame_interval = None
 
         # Clean up previous runs with error handling
         try:
@@ -70,6 +77,7 @@ class ScreenshotManager:
             "settings": {
                 "interval": self.interval,
                 "save_directory": save_dir,
+                "mode": mode,
             },
         }
         self._save_json()
@@ -81,35 +89,53 @@ class ScreenshotManager:
         self.running = False
         self.thread = None
 
+        # Initialize video capture if in training mode
+        if self.mode == "training":
+            if not os.path.exists(self.training_video):
+                raise FileNotFoundError(
+                    f"Training video file not found: {self.training_video}"
+                )
+            self.video_capture = cv2.VideoCapture(self.training_video)
+            if not self.video_capture.isOpened():
+                raise ValueError(f"Could not open video file: {self.training_video}")
+
+            # Get video properties
+            self.video_fps = self.video_capture.get(cv2.CAP_PROP_FPS)
+            self.frame_interval = int(self.video_fps * self.interval)
+
     def _save_json(self):
         """Save the current data to the JSON file."""
         with open(self.json_file, "w") as f:
             json.dump(self.data, f, indent=4, cls=JSONEncoder)
 
-    def _is_same_as_previous(self, screenshot):
-        """Compare the current screenshot with the previous one."""
-        if self.previous_hash is None:
-            return False
+    def _get_screenshot(self):
+        """Get screenshot based on current mode."""
+        if self.mode == "testing":
+            # Take live screenshot
+            screenshot = pyautogui.screenshot()
+            image_np = np.array(screenshot)
+            image_cv = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
+            return screenshot, image_cv
+        else:  # training mode
+            # Read frame from video
+            ret, frame = self.video_capture.read()
+            if not ret:
+                return None, None
 
-        current_hash = imagehash.phash(screenshot)
-        hash_difference = current_hash - self.previous_hash
-        return hash_difference < 3
+            # Convert OpenCV BGR to RGB for PIL Image
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            screenshot = Image.fromarray(frame_rgb)
+            return screenshot, frame
 
     def take_screenshot(self):
         """Take a screenshot and detect faces."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{timestamp}.png"
-        filepath = os.path.join(self.save_dir, filename)
 
-        # Take and save screenshot
-        screenshot = pyautogui.screenshot()
-        is_same = self._is_same_as_previous(screenshot)
-        screenshot.save(filepath)
-        self.previous_hash = imagehash.phash(screenshot)
+        # Get screenshot based on mode
+        screenshot, image_cv = self._get_screenshot()
+        if screenshot is None:  # End of video in training mode
+            return None, True
 
         # Detect faces
-        image_np = np.array(screenshot)
-        image_cv = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
         face_results = self.face_detector.detect_faces(image_cv)
 
         # Update cumulative stats
@@ -118,23 +144,14 @@ class ScreenshotManager:
         # Prepare screenshot data
         screenshot_data = {
             "id": self.data["total_count"] + 1,
-            "filename": filename,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "filepath": filepath,
-            "same_as_previous": is_same,
             "face_data": [],
         }
-
+        
         # Process each face
         for face_info in face_results["faces"]:
             face_data = {
                 "face_id": face_info["id"],
-                "location": {
-                    "top": face_info["location"][0],
-                    "right": face_info["location"][1],
-                    "bottom": face_info["location"][2],
-                    "left": face_info["location"][3],
-                },
                 "cropped_face_path": None,
             }
 
@@ -147,6 +164,7 @@ class ScreenshotManager:
             )
             face_data["cropped_face_path"] = cropped_path
 
+            # Appending final data
             screenshot_data["face_data"].append(face_data)
 
         # Update data
@@ -158,22 +176,47 @@ class ScreenshotManager:
 
         self._save_json()
 
-        return screenshot_data, is_same
+        return screenshot_data
+
+    def _process_video_frames(self):
+        """Process video frames at specified intervals in training mode."""
+        frame_count = 0
+        while self.running:
+            # Set the frame position
+            self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, frame_count)
+
+            # Process frame
+            screenshot_data = self.take_screenshot()
+
+            if screenshot_data is None:  # End of video
+                print("Finished processing all frames from training video.")
+                self.stop()
+                break
+
+            # Print status
+            print(f"Processed frame {screenshot_data['id']}:")
+            for face in screenshot_data["face_data"]:
+                print(f"  - Detected face {face['face_id']}")
+
+            # Move to next frame at specified interval
+            frame_count += self.frame_interval
+            if frame_count >= self.video_capture.get(cv2.CAP_PROP_FRAME_COUNT):
+                break
 
     def _screenshot_loop(self):
         """Main loop for taking screenshots."""
-        while self.running:
-            screenshot_data, is_same = self.take_screenshot()
+        if self.mode == "training":
+            self._process_video_frames()
+        else:  # testing mode
+            while self.running:
+                screenshot_data, is_same = self.take_screenshot()
 
-            # Print status
-            if is_same:
-                print(f"Screenshot {screenshot_data['id']} is the same as previous")
-            else:
+                # Print status
                 print(f"Screenshot {screenshot_data['id']} captured:")
                 for face in screenshot_data["face_data"]:
                     print(f"  - Detected face {face['face_id']}")
 
-            time.sleep(self.interval)
+                time.sleep(self.interval)
 
     def start(self):
         """Start the screenshot capture."""
@@ -182,8 +225,9 @@ class ScreenshotManager:
             self.thread = threading.Thread(target=self._screenshot_loop)
             self.thread.daemon = True
             self.thread.start()
+            mode_str = "live screen" if self.mode == "testing" else "training video"
             print(
-                f"Screenshot capture started (Interval: {self.interval}s). "
+                f"Screenshot capture started from {mode_str} (Interval: {self.interval}s). "
                 f"Saving to {self.save_dir}"
             )
 
@@ -193,6 +237,8 @@ class ScreenshotManager:
             self.running = False
             if self.thread:
                 self.thread.join(timeout=2)
+            if self.video_capture is not None:
+                self.video_capture.release()
             print("Screenshot capture stopped.")
             print(f"Results saved to {self.json_file}")
             stats = self.data["cumulative_stats"]

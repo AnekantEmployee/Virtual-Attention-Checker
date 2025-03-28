@@ -61,6 +61,7 @@ class FaceDetector:
 
                 face_locations.append((top, right, bottom, left))
 
+        # os.remove(image_path)
         return self._prepare_face_results(face_locations)
 
     def _prepare_face_results(self, face_locations):
