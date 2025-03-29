@@ -5,6 +5,7 @@ import threading
 import pyautogui
 import numpy as np
 from PIL import Image
+import pandas as pd
 from .face_detector import FaceDetector
 
 
@@ -14,6 +15,7 @@ class ScreenshotManager:
         interval=1,
         mode="training",  # "testing" or "training"
         training_video="D:\DS Project\Face Recoginition Meeting\meeting_recoding.avi",
+        # training_video="WIN_20250329_00_32_17_Pro.mp4",
     ):
         """Initialize the screenshot manager."""
         self.interval = interval
@@ -25,6 +27,7 @@ class ScreenshotManager:
 
         # Initialize face detector
         self.face_detector = FaceDetector()
+        self.final_output = []
 
         # Thread control
         self.running = False
@@ -72,7 +75,8 @@ class ScreenshotManager:
             return None, True
 
         # Detect faces
-        self.face_detector.detect_faces(image_cv)
+        results = self.face_detector.detect_faces(image_cv)
+        return results
 
     def _process_video_frames(self):
         """Process video frames at specified intervals in training mode."""
@@ -84,19 +88,33 @@ class ScreenshotManager:
             # Process frame
             screenshot_data = self.take_screenshot()
 
-            if screenshot_data is None:  # End of video
-                print("Finished processing all frames from training video.")
-                self.stop()
-                break
+            try:
+                if screenshot_data is None:  # End of video
+                    print("Finished processing all frames from training video.")
+                    self.stop()  # stop the loop, but do not join the thread.
+                    break
+                else:
+                    if screenshot_data.get("is_verified"):
+                        self.final_output.append(screenshot_data)
+            except Exception as e:
+                print(e)
 
             # Move to next frame at specified interval
             frame_count += self.frame_interval
             if frame_count >= self.video_capture.get(cv2.CAP_PROP_FRAME_COUNT):
                 break
 
+    def save_results(self):
+        path = "final_output.csv"
+        if os.path.exists(path):
+            os.remove(path)
+
+        df = pd.DataFrame(self.final_output)
+        df.drop("is_verified", axis=1, inplace=True)
+        df.to_csv(path)
+
     def _screenshot_loop(self):
         """Main loop for taking screenshots."""
-
         if self.mode == "training":
             self._process_video_frames()
         else:  # testing mode
@@ -118,10 +136,9 @@ class ScreenshotManager:
 
     def stop(self):
         """Stop the screenshot capture."""
+        self.save_results()
         if self.running:
             self.running = False
-            if self.thread:
-                self.thread.join(timeout=2)
             if self.video_capture is not None:
                 self.video_capture.release()
             print("Screenshot capture stopped.")

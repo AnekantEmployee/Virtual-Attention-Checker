@@ -1,14 +1,16 @@
 import os
 import cv2
 import time
-import json
 import mtcnn
 import torch
 import shutil
+import joblib  # For model serialization
 import numpy as np
+import pandas as pd
 from PIL import Image
 from sklearn.svm import SVC
 from datetime import datetime
+from .head_detection import HeadPoseDetector
 from facenet_pytorch import InceptionResnetV1
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics.pairwise import cosine_similarity
@@ -21,30 +23,17 @@ class FaceVerification:
 
         # Initialize FaceNet for face embeddings
         self.resnet = InceptionResnetV1(pretrained="vggface2").eval()
-        self.faces_data = []
+
+        # Headpose detector
+        self.head_pose_detector = HeadPoseDetector()
 
         # Create directories for verified faces
         self.faces_dir = "faces"
-        self.faces_json_path = os.path.join(self.faces_dir, "verified_faces.json")
+        self.model_dir = "model_cache"  # Directory to store trained models
 
-        if os.path.exists(self.faces_dir):
-            try:
-                shutil.rmtree(self.faces_dir)
-            except FileNotFoundError:
-                try:
-                    os.rmdir(self.faces_dir)
-                except FileNotFoundError as e:
-                    print(e)
-                    pass
-        os.makedirs(self.faces_dir)
-
-        # Initialize JSON file if it doesn't exist
-        if os.path.exists(self.faces_json_path):
-            os.remove(self.faces_json_path)
-
-        if not os.path.exists(self.faces_json_path):
-            with open(self.faces_json_path, "w") as f:
-                json.dump([], f)
+        # Create directories if they don't exist
+        os.makedirs(self.faces_dir, exist_ok=True)
+        os.makedirs(self.model_dir, exist_ok=True)
 
         # Load target images and train model
         target_dir = "target_img"
@@ -52,8 +41,80 @@ class FaceVerification:
         if not self.targets:
             raise ValueError("No valid target images found in target directory")
 
-        # Train model
-        self.train_model()
+        # Check if we can load a cached model
+        if not self.load_cached_model():
+            # No cached model available or it's outdated, train a new one
+            self.train_model()
+            self.cache_model()
+
+    def get_target_images_hash(self):
+        """Generate a hash of the target images to detect changes"""
+        import hashlib
+
+        hash_obj = hashlib.sha256()
+        for target in sorted(self.targets, key=lambda x: x["name"]):
+            with open(target["path"], "rb") as f:
+                while chunk := f.read(8192):
+                    hash_obj.update(chunk)
+        return hash_obj.hexdigest()
+
+    def load_cached_model(self):
+        """Try to load a cached model if available and still valid"""
+        try:
+            # Check if we have a cached model
+            model_path = os.path.join(self.model_dir, "face_verification_model.joblib")
+            hash_path = os.path.join(self.model_dir, "target_images_hash.txt")
+
+            if not os.path.exists(model_path) or not os.path.exists(hash_path):
+                return False
+
+            # Check if the current target images match the cached ones
+            with open(hash_path, "r") as f:
+                cached_hash = f.read().strip()
+
+            current_hash = self.get_target_images_hash()
+            if cached_hash != current_hash:
+                return False
+
+            # Load the cached model
+            cached_data = joblib.load(model_path)
+            self.classifier = cached_data["classifier"]
+            self.le = cached_data["label_encoder"]
+            self.training_data = cached_data["training_data"]
+            self.training_labels = cached_data["training_labels"]
+
+            print("Loaded cached face verification model")
+            return True
+
+        except Exception as e:
+            print(f"Error loading cached model: {str(e)}")
+            return False
+
+    def cache_model(self):
+        """Cache the current trained model"""
+        try:
+            model_path = os.path.join(self.model_dir, "face_verification_model.joblib")
+            hash_path = os.path.join(self.model_dir, "target_images_hash.txt")
+
+            # Save model data
+            model_data = {
+                "classifier": self.classifier,
+                "label_encoder": self.le,
+                "training_data": self.training_data,
+                "training_labels": self.training_labels,
+            }
+
+            joblib.dump(model_data, model_path)
+
+            # Save current target images hash
+            current_hash = self.get_target_images_hash()
+            with open(hash_path, "w") as f:
+                f.write(current_hash)
+
+            print("Successfully cached face verification model")
+
+        except Exception as e:
+            print(f"Error caching model: {str(e)}")
 
     def is_valid_image(self, image_path, min_size=64):
         """Check if image exists and meets minimum size requirements"""
@@ -198,7 +259,7 @@ class FaceVerification:
                 face_results = self.face_detector.detect_faces(img_rgb)
                 if len(face_results) == 0:
                     print("No face detected in the provided image")
-                    return {}
+                    return {"is_verified": False}
 
                 # Take the best face
                 best_face = max(face_results, key=lambda x: x["confidence"])
@@ -211,7 +272,7 @@ class FaceVerification:
 
                 if w <= 0 or h <= 0:
                     print("Invalid face dimensions in the provided image")
-                    return {}
+                    return {"is_verified": False}
 
                 face_img = img_rgb[y : y + h, x : x + w]
 
@@ -219,7 +280,7 @@ class FaceVerification:
                 embedding = self.get_face_embedding(face_img)
                 if embedding is None:
                     print("Could not generate embedding for the face")
-                    return {}
+                    return {"is_verified": False}
 
                 embedding = embedding.reshape(1, -1)
 
@@ -239,55 +300,24 @@ class FaceVerification:
                 if is_verified:
                     verified_face_pil = Image.fromarray(face_img)
                     verified_face_pil.save(verified_face_path)
+                    head_pose_results = self.head_pose_detector.process_image(face_img)
 
                     result_temp = {
                         "face_path": verified_face_path,
-                        "face_id": face_id,
                         "timestamp": current_time,
-                        "is_verified": is_verified,
+                        "head_yaw": head_pose_results["head_yaw"],
+                        "head_pitch": head_pose_results["head_pitch"],
+                        "is_verified": True,
                     }
-                    print(result_temp)
-                    self._append_to_verified_faces(result_temp)
+                    print(f"Face Processed Succesfully for {verified_face_path}")
+                    return result_temp
+                else:
+                    return {"is_verified": False}
 
             except Exception as e:
                 print(f"Error processing face image: {str(e)}")
-                return []
+                return {"is_verified": False}
 
         except Exception as outer_e:
             print(f"Outer error: {str(outer_e)}")
-            return []
-
-    def _append_to_verified_faces(self, face_data):
-        """Append verified face data to JSON file with improved error handling."""
-        try:
-            self.faces_data.append(face_data)
-
-            try:
-                # Create a temporary file
-                temp_file_path = self.faces_json_path + ".temp"
-
-                with open(temp_file_path, "w") as temp_file:
-                    json.dump(self.faces_data, temp_file, indent=2)
-
-                # Rename the temporary file to the final JSON file
-                os.rename(temp_file_path, self.faces_json_path)
-
-                print(
-                    f"Successfully saved data to {self.faces_json_path}"
-                )  # Add this print
-
-            except Exception as json_write_error:
-                print(f"Error writing to JSON file: {json_write_error}")
-                if os.path.exists(temp_file_path):  # Debugging
-                    print(f"Temporary file {temp_file_path} exists.")
-                else:
-                    print(f"Temporary file {temp_file_path} does not exist.")
-
-                try:
-                    with open(self.faces_json_path, "r") as f:
-                        print(f"Current content of json: {f.read()}")  # Debug
-                except:
-                    print("Could not read the json file for debug")
-
-        except Exception as e:
-            print(f"Error saving verified face data: {str(e)}")
+            return {"is_verified": False}

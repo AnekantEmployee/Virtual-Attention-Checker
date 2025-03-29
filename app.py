@@ -1,5 +1,12 @@
+import warnings
 import streamlit as st
 from views import ScreenshotManager
+
+
+warnings.filterwarnings(
+    "ignore", category=UserWarning, message="SymbolDatabase.GetPrototype.*"
+)
+
 
 st.title("Virtual Attention Checker")
 

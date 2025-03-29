@@ -32,7 +32,8 @@ class FaceDetector:
             image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)  # Convert to BGR for OpenCV
 
         # Detect faces using MediaPipe
-        return self._detect_faces_mediapipe(image)
+        results = self._detect_faces_mediapipe(image)
+        return results
 
     def _detect_faces_mediapipe(self, image):
         """Detect faces using MediaPipe"""
@@ -62,7 +63,8 @@ class FaceDetector:
 
                 face_locations.append((top, right, bottom, left))
 
-        return self._prepare_face_results(face_locations, image)
+        results = self._prepare_face_results(face_locations, image)
+        return results
 
     def _prepare_face_results(self, face_locations, image):
         """Prepare face detection results with additional validation"""
@@ -80,7 +82,9 @@ class FaceDetector:
                 validated_locations.append(location)
 
         for location in validated_locations:
-            self.save_face(image, location)
+            return self.save_face(image, location)
+        else:
+            return {"is_verified": False}
 
     def save_face(self, image, face_location):
         # Convert PIL Image to numpy array if needed
