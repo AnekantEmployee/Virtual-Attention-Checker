@@ -1,8 +1,8 @@
 import cv2
-import numpy as np
-import tensorflow as tf
 import dlib
+import numpy as np
 from PIL import Image
+import tensorflow as tf
 
 
 class YawnDetector:
@@ -20,32 +20,18 @@ class YawnDetector:
         self.reverse_class_indices = {v: k for k, v in self.class_indices.items()}
 
     def process_image(self, image_input):
-        """
-        Complete pipeline for single image processing
-        Args:
-            image_input: Can be either:
-                - Path to image file (str)
-                - PIL Image object
-                - Numpy array (BGR or RGB)
-        Returns:
-            Dictionary with prediction results
-        """
-        # Step 1: Convert input to numpy array (BGR format)
         image_np = self._convert_to_numpy(image_input)
         if image_np is None:
             return {"error": "Invalid image input", "is_verified": False}
 
-        # Step 2: Detect and crop mouth
         mouth_crop = self._crop_mouth_region(image_np)
         if mouth_crop is None:
             return {"error": "No face/mouth detected", "is_verified": False}
 
-        # Step 3: Preprocess for model
         processed_img = self._preprocess_mouth_crop(mouth_crop)
         if processed_img is None:
             return {"error": "Image preprocessing failed", "is_verified": False}
 
-        # Step 4: Make prediction
         return self._predict_yawn(processed_img)
 
     def _convert_to_numpy(self, image_input):
@@ -58,7 +44,7 @@ class YawnDetector:
             img = cv2.imread(image_input)
             if img is None:
                 print(f"Error reading image: {image_input}")
-                return {"is_verified": False}
+                return None
             return img
 
         elif isinstance(image_input, Image.Image):
@@ -75,7 +61,7 @@ class YawnDetector:
                 return img_bgr
             except Exception as e:
                 print(f"Error converting PIL image: {e}")
-                return {"is_verified": False}
+                return None
 
         elif isinstance(image_input, np.ndarray):
             # Input is numpy array
@@ -89,10 +75,10 @@ class YawnDetector:
                 return image_input
             except Exception as e:
                 print(f"Error converting numpy array: {e}")
-                return {"is_verified": False}
+                return None
 
         print(f"Unsupported image input type: {type(image_input)}")
-        return {"is_verified": False}
+        return None
 
     def _crop_mouth_region(self, image_np, padding=20):
         """Detect and crop mouth region from numpy array (BGR format)
@@ -100,7 +86,7 @@ class YawnDetector:
             numpy.ndarray: Cropped mouth region, or None if detection fails
         """
         if image_np is None:
-            return {"is_verified": False}
+            return None
 
         try:
             gray = cv2.cvtColor(image_np, cv2.COLOR_BGR2GRAY)
@@ -108,7 +94,7 @@ class YawnDetector:
 
             if not faces:
                 print("No face detected")
-                return {"is_verified": False}
+                return None
 
             landmarks = self.predictor(gray, faces[0])
             mouth_points = np.array(
@@ -125,10 +111,13 @@ class YawnDetector:
             return image_np[y : y + h, x : x + w]
         except Exception as e:
             print(f"Error cropping mouth region: {e}")
-            return {"is_verified": False}
+            return None
 
     def _preprocess_mouth_crop(self, mouth_crop):
         """Preprocess cropped mouth image for model input"""
+        if mouth_crop is None:
+            return None
+
         try:
             # Convert BGR to RGB
             mouth_rgb = cv2.cvtColor(mouth_crop, cv2.COLOR_BGR2RGB)
@@ -140,10 +129,14 @@ class YawnDetector:
             return tf.expand_dims(img, 0)
         except Exception as e:
             print(f"Preprocessing error: {e}")
-            return {"is_verified": False}
+            return None
 
     def _predict_yawn(self, processed_img):
         """Make prediction on preprocessed image"""
+
+        if processed_img is None:
+            return {"error": "Invalid input for prediction", "is_verified": False}
+
         try:
             pred = self.model.predict(processed_img, verbose=0)[0]
             class_idx = np.argmax(pred)

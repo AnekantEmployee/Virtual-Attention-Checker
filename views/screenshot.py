@@ -1,11 +1,12 @@
 import os
 import cv2
 import time
+import datetime
 import threading
 import pyautogui
 import numpy as np
-from PIL import Image
 import pandas as pd
+from PIL import Image
 from .face_detector import FaceDetector
 
 
@@ -14,8 +15,8 @@ class ScreenshotManager:
         self,
         interval=1,
         mode="testing",  # "testing" or "training"
-        # training_video="D:\DS Project\Face Recoginition Meeting\meeting_recoding.avi",
-        training_video="WIN_20250329_00_32_17_Pro.mp4",
+        training_video="D:\DS Project\Face Recoginition Meeting\meeting_recoding.avi",
+        # training_video="WIN_20250329_00_32_17_Pro.mp4",
     ):
         """Initialize the screenshot manager."""
         self.interval = interval
@@ -76,8 +77,11 @@ class ScreenshotManager:
 
         # Detect faces
         results = self.face_detector.detect_faces(image_cv)
-        if self.mode == 'testing' and results['is_verified']:
-            self.final_output.append(results)        
+
+        if self.mode == "testing":
+            if results["is_verified"]:
+                self.final_output.append(results)
+
         return results
 
     def _process_video_frames(self):
@@ -91,14 +95,14 @@ class ScreenshotManager:
             screenshot_data = self.take_screenshot()
 
             try:
-                print("Checking", screenshot_data)
                 if screenshot_data is None:  # End of video
                     print("Finished processing all frames from training video.")
                     self.stop()  # stop the loop, but do not join the thread.
                     break
                 else:
-                    if screenshot_data.get("is_verified"):
+                    if screenshot_data["is_verified"]:
                         self.final_output.append(screenshot_data)
+
             except Exception as e:
                 print(f"Error: {e}")
 
@@ -121,8 +125,15 @@ class ScreenshotManager:
             self._process_video_frames()
         else:  # testing mode
             while self.running:
-                self.take_screenshot()
-                # time.sleep(self.interval)
+                results = self.take_screenshot()
+
+                diff_timestamp = pd.to_datetime(results["timestamp"]) - pd.to_datetime(
+                    datetime.datetime.now()
+                )
+                milliseconds = int(abs(diff_timestamp.total_seconds() * 1000))
+
+                if milliseconds <= 1500:
+                    time.sleep(1.5)
 
     def start(self):
         """Start the screenshot capture."""

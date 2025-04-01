@@ -241,7 +241,7 @@ class FaceVerification:
         self.training_data = np.array(face_data)
         self.training_labels = np.array(labels)
 
-    def verifyFace(self, face_data_pil):
+    def verifyFace(self, face_data_pil, screenshot):
         """Verify faces from PIL Image using our improved model"""
         try:
             current_time = datetime.now().isoformat()
@@ -261,7 +261,10 @@ class FaceVerification:
                 face_results = self.face_detector.detect_faces(img_rgb)
                 if len(face_results) == 0:
                     print("No face detected in the provided image")
-                    return {"is_verified": False}
+                    return {
+                        "is_verified": False,
+                        "timestamp": datetime.now().isoformat(),
+                    }
 
                 # Take the best face
                 best_face = max(face_results, key=lambda x: x["confidence"])
@@ -274,7 +277,10 @@ class FaceVerification:
 
                 if w <= 0 or h <= 0:
                     print("Invalid face dimensions in the provided image")
-                    return {"is_verified": False}
+                    return {
+                        "is_verified": False,
+                        "timestamp": datetime.now().isoformat(),
+                    }
 
                 face_img = img_rgb[y : y + h, x : x + w]
 
@@ -282,7 +288,10 @@ class FaceVerification:
                 embedding = self.get_face_embedding(face_img)
                 if embedding is None:
                     print("Could not generate embedding for the face")
-                    return {"is_verified": False}
+                    return {
+                        "is_verified": False,
+                        "timestamp": datetime.now().isoformat(),
+                    }
 
                 embedding = embedding.reshape(1, -1)
 
@@ -318,17 +327,27 @@ class FaceVerification:
                             if not yawn_results["is_verified"]
                             else yawn_results["yawn_state"]
                         ),
+                        "presenting_state": 0,
                     }
                     # print(result_temp)
                     print(f"Face Processed Succesfully for {verified_face_path}")
                     return result_temp
                 else:
-                    return {"is_verified": False}
+                    return {
+                        "is_verified": False,
+                        "timestamp": datetime.now().isoformat(),
+                    }
 
             except Exception as e:
                 print(f"Error processing face image: {str(e)}")
-                return {"is_verified": False}
+                return {
+                    "is_verified": False,
+                    "timestamp": datetime.now().isoformat(),
+                }
 
         except Exception as outer_e:
             print(f"Outer error: {str(outer_e)}")
-            return {"is_verified": False}
+            return {
+                "is_verified": False,
+                "timestamp": datetime.now().isoformat(),
+            }

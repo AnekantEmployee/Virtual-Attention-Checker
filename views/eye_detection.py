@@ -13,6 +13,7 @@ class EyeDetector:
 
     def get_eye_state(self, image_pil):
         """Process a single PIL image and save results to CSV."""
+
         # Convert PIL Image to numpy array
         image = np.array(image_pil)
         # Convert RGB to BGR for OpenCV

@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 from PIL import Image
 import mediapipe as mp
+from datetime import datetime
+from .is_presenting import PresentingChecker
 from .face_verification import FaceVerification
 
 
@@ -18,6 +20,7 @@ class FaceDetector:
         )
 
         self.face_verification = FaceVerification()
+        self.is_presenting = PresentingChecker()
 
     def detect_faces(self, image):
         """
@@ -31,10 +34,18 @@ class FaceDetector:
             image = np.array(image)
             image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)  # Convert to BGR for OpenCV
 
-        # Detect faces using MediaPipe
-        results = self._detect_faces_mediapipe(image)
-        # print("Mediapipe results", results)
-        return results
+        is_presenting_state = self.is_presenting.has_red_border(image)
+        if is_presenting_state:
+            return {
+                "is_verified": True,
+                "timestamp": datetime.now().isoformat(),
+                "presenting_state": 1,
+            }
+        else:
+            # Detect faces using MediaPipe
+            results = self._detect_faces_mediapipe(image)
+            # print("Mediapipe results", results)
+            return results
 
     def _detect_faces_mediapipe(self, image):
         """Detect faces using MediaPipe"""
@@ -65,7 +76,6 @@ class FaceDetector:
                 face_locations.append((top, right, bottom, left))
 
         results = self._prepare_face_results(face_locations, image)
-        # print("Detecting faces", results)
         return results
 
     def _prepare_face_results(self, face_locations, image):
@@ -88,7 +98,10 @@ class FaceDetector:
             # print("Prepare face results", results)
             return results
 
-        return {"is_verified": False}
+        return {
+            "is_verified": False,
+            "timestamp": datetime.now().isoformat(),
+        }
 
     def save_face(self, image, face_location):
         # Convert PIL Image to numpy array if needed
@@ -126,6 +139,6 @@ class FaceDetector:
             cv2.cvtColor(cropped_face, cv2.COLOR_BGR2RGB)
         )
 
-        result = self.face_verification.verifyFace(cropped_face_pil)
+        result = self.face_verification.verifyFace(cropped_face_pil, screenshot=image)
         # print("Face detector class", result)
         return result

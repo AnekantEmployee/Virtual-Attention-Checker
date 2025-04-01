@@ -1,6 +1,6 @@
 import warnings
 import streamlit as st
-from views import ScreenshotManager
+from views.screenshot import ScreenshotManager
 
 
 warnings.filterwarnings(
