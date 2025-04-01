@@ -1,11 +1,17 @@
+dlib==19.24.1
 facenet_pytorch==2.6.0
+joblib==1.4.2
 mediapipe==0.10.14
 mtcnn==1.0.0
 numpy==2.2.4
 opencv_contrib_python==4.11.0.86
 opencv_python==4.11.0.86
+pandas==2.2.3
 Pillow==11.1.0
 pyautogui==0.9.54
 scikit_learn==1.6.1
 streamlit==1.44.0
+tensorflow==2.12.0
+tensorflow_intel==2.12.0
 torch==2.2.2
+ultralytics==8.3.99

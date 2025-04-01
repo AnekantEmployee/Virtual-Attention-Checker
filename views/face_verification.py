@@ -9,7 +9,7 @@ from PIL import Image
 from sklearn.svm import SVC
 from datetime import datetime
 from .eye_detection import EyeDetector
-from .yawn_detection import YawnDetection
+from .yawn_detection import YawnDetector
 from .head_detection import HeadPoseDetector
 from facenet_pytorch import InceptionResnetV1
 from sklearn.preprocessing import LabelEncoder
@@ -26,12 +26,12 @@ class FaceVerification:
 
         # Headpose detector
         self.head_pose_detector = HeadPoseDetector()
-        self.yawn_detector = YawnDetection()
+        self.yawn_detector = YawnDetector()
         self.eye_detection = EyeDetector()
 
         # Create directories for verified faces
         self.faces_dir = "faces"
-        self.model_dir = "model_cache"  # Directory to store trained models
+        self.model_dir = "models/verification"  # Directory to store trained models
 
         # Create directories if they don't exist
         os.makedirs(self.faces_dir, exist_ok=True)
@@ -304,7 +304,8 @@ class FaceVerification:
                     verified_face_pil.save(verified_face_path)
                     head_pose_results = self.head_pose_detector.process_image(face_img)
                     eye_results = self.eye_detection.get_eye_state(face_img)
-                
+                    yawn_results = self.yawn_detector.process_image(face_img)
+
                     result_temp = {
                         "is_verified": True,
                         "timestamp": current_time,
@@ -312,6 +313,11 @@ class FaceVerification:
                         "eye_state": eye_results["eye_state"],
                         "head_yaw": head_pose_results["head_yaw"],
                         "head_pitch": head_pose_results["head_pitch"],
+                        "yawn_results": (
+                            -1
+                            if not yawn_results["is_verified"]
+                            else yawn_results["yawn_state"]
+                        ),
                     }
                     # print(result_temp)
                     print(f"Face Processed Succesfully for {verified_face_path}")

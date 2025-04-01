@@ -6,7 +6,7 @@ from ultralytics import YOLO
 class EyeDetector:
     def __init__(
         self,
-        model_path="best.pt",
+        model_path="models/eye/best.pt",
     ):
         self.model_path = model_path
         self.model = YOLO(self.model_path)
@@ -19,7 +19,9 @@ class EyeDetector:
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
         # Run inference
-        results = self.model.predict(source=image, conf=0.5, device="cpu")
+        results = self.model.predict(
+            source=image, conf=0.5, device="cpu", verbose=False
+        )
 
         # Record detections
         for r in results:
