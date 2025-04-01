@@ -13,9 +13,9 @@ class ScreenshotManager:
     def __init__(
         self,
         interval=1,
-        mode="training",  # "testing" or "training"
-        training_video="D:\DS Project\Face Recoginition Meeting\meeting_recoding.avi",
-        # training_video="WIN_20250329_00_32_17_Pro.mp4",
+        mode="testing",  # "testing" or "training"
+        # training_video="D:\DS Project\Face Recoginition Meeting\meeting_recoding.avi",
+        training_video="WIN_20250329_00_32_17_Pro.mp4",
     ):
         """Initialize the screenshot manager."""
         self.interval = interval
@@ -76,6 +76,8 @@ class ScreenshotManager:
 
         # Detect faces
         results = self.face_detector.detect_faces(image_cv)
+        if self.mode == 'testing' and results['is_verified']:
+            self.final_output.append(results)        
         return results
 
     def _process_video_frames(self):
@@ -89,6 +91,7 @@ class ScreenshotManager:
             screenshot_data = self.take_screenshot()
 
             try:
+                print("Checking", screenshot_data)
                 if screenshot_data is None:  # End of video
                     print("Finished processing all frames from training video.")
                     self.stop()  # stop the loop, but do not join the thread.
@@ -97,7 +100,7 @@ class ScreenshotManager:
                     if screenshot_data.get("is_verified"):
                         self.final_output.append(screenshot_data)
             except Exception as e:
-                print(e)
+                print(f"Error: {e}")
 
             # Move to next frame at specified interval
             frame_count += self.frame_interval
@@ -110,7 +113,6 @@ class ScreenshotManager:
             os.remove(path)
 
         df = pd.DataFrame(self.final_output)
-        df.drop("is_verified", axis=1, inplace=True)
         df.to_csv(path)
 
     def _screenshot_loop(self):
@@ -120,7 +122,7 @@ class ScreenshotManager:
         else:  # testing mode
             while self.running:
                 self.take_screenshot()
-                time.sleep(self.interval)
+                # time.sleep(self.interval)
 
     def start(self):
         """Start the screenshot capture."""

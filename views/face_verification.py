@@ -3,13 +3,13 @@ import cv2
 import time
 import mtcnn
 import torch
-import shutil
-import joblib  # For model serialization
+import joblib
 import numpy as np
-import pandas as pd
 from PIL import Image
 from sklearn.svm import SVC
 from datetime import datetime
+from .eye_detection import EyeDetector
+from .yawn_detection import YawnDetection
 from .head_detection import HeadPoseDetector
 from facenet_pytorch import InceptionResnetV1
 from sklearn.preprocessing import LabelEncoder
@@ -26,6 +26,8 @@ class FaceVerification:
 
         # Headpose detector
         self.head_pose_detector = HeadPoseDetector()
+        self.yawn_detector = YawnDetection()
+        self.eye_detection = EyeDetector()
 
         # Create directories for verified faces
         self.faces_dir = "faces"
@@ -301,14 +303,17 @@ class FaceVerification:
                     verified_face_pil = Image.fromarray(face_img)
                     verified_face_pil.save(verified_face_path)
                     head_pose_results = self.head_pose_detector.process_image(face_img)
-
+                    eye_results = self.eye_detection.get_eye_state(face_img)
+                
                     result_temp = {
-                        "face_path": verified_face_path,
+                        "is_verified": True,
                         "timestamp": current_time,
+                        "face_path": verified_face_path,
+                        "eye_state": eye_results["eye_state"],
                         "head_yaw": head_pose_results["head_yaw"],
                         "head_pitch": head_pose_results["head_pitch"],
-                        "is_verified": True,
                     }
+                    # print(result_temp)
                     print(f"Face Processed Succesfully for {verified_face_path}")
                     return result_temp
                 else:

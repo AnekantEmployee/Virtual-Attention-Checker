@@ -103,9 +103,7 @@ class HeadPoseDetector:
                 return {
                     "head_pitch": round(head_angles["pitch"], 2),
                     "head_yaw": round(head_angles["yaw"], 2),
+                    "is_verified": True,
                 }
-        else:
-            return {
-                "head_pitch": 0,
-                "head_yaw": 0,
-            }
+
+        return {"head_pitch": 0, "head_yaw": 0, "is_verified": False}

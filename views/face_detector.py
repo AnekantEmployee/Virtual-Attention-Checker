@@ -33,6 +33,7 @@ class FaceDetector:
 
         # Detect faces using MediaPipe
         results = self._detect_faces_mediapipe(image)
+        # print("Mediapipe results", results)
         return results
 
     def _detect_faces_mediapipe(self, image):
@@ -64,6 +65,7 @@ class FaceDetector:
                 face_locations.append((top, right, bottom, left))
 
         results = self._prepare_face_results(face_locations, image)
+        # print("Detecting faces", results)
         return results
 
     def _prepare_face_results(self, face_locations, image):
@@ -82,9 +84,11 @@ class FaceDetector:
                 validated_locations.append(location)
 
         for location in validated_locations:
-            return self.save_face(image, location)
-        else:
-            return {"is_verified": False}
+            results = self.save_face(image, location)
+            # print("Prepare face results", results)
+            return results
+
+        return {"is_verified": False}
 
     def save_face(self, image, face_location):
         # Convert PIL Image to numpy array if needed
@@ -99,7 +103,7 @@ class FaceDetector:
         height = bottom - top
         width = right - left
         if height <= 0 or width <= 0:
-            return None
+            return {"is_verified": False}
 
         # Add proportional padding (20% of face width/height)
         h_pad = int(width * 0.2)
@@ -112,7 +116,7 @@ class FaceDetector:
 
         # Validate final dimensions
         if bottom <= top or right <= left:
-            return None
+            return {"is_verified": False}
 
         # Crop the face
         cropped_face = image[top:bottom, left:right]
@@ -123,4 +127,5 @@ class FaceDetector:
         )
 
         result = self.face_verification.verifyFace(cropped_face_pil)
+        # print("Face detector class", result)
         return result
