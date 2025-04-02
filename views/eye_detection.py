@@ -24,11 +24,17 @@ class EyeDetector:
             source=image, conf=0.5, device="cpu", verbose=False
         )
 
-        # Record detections
+        best_eye_state = -1
+        best_confidence = 0.0
+
         for r in results:
             for box in r.boxes:
-                return {
-                    "eye_state": int(box.cls),
-                    "is_verified": True,
-                }
-        return {"eye_state": -1, "is_verified": False}
+                confidence = float(box.conf)
+                if confidence > best_confidence:
+                    best_confidence = confidence
+                    best_eye_state = int(box.cls)
+
+        if best_eye_state != -1:
+            return {"eye_state": best_eye_state, "is_verified": True}
+        else:
+            return {"eye_state": -1, "is_verified": False}

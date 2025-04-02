@@ -241,7 +241,7 @@ class FaceVerification:
         self.training_data = np.array(face_data)
         self.training_labels = np.array(labels)
 
-    def verifyFace(self, face_data_pil, screenshot):
+    def verifyFace(self, face_data_pil):
         """Verify faces from PIL Image using our improved model"""
         try:
             current_time = datetime.now().isoformat()

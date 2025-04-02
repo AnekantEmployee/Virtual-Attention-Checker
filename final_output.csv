@@ -1,2 +1,4 @@
 ,is_verified,timestamp,face_path,eye_state,head_yaw,head_pitch,yawn_results,presenting_state
-0,True,2025-04-02T00:41:56.688201,faces\face_1743534716688.jpg,-1,0,0,-1,0
+0,True,2025-04-02T10:30:15.955115,faces\face_1743570015955.jpg,1,1.62,-173.08,1,0
+1,True,2025-04-02T10:30:19.371014,faces\face_1743570019371.jpg,1,0.01,-172.9,1,0
+2,True,2025-04-02T10:30:22.194910,faces\face_1743570022194.jpg,1,1.67,-172.58,1,0

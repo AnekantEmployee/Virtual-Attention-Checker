@@ -67,11 +67,15 @@ class FaceDetector:
                 w = int(box.width * iw)
                 h = int(box.height * ih)
 
-                # Convert to (top, right, bottom, left) format
-                top = y
-                right = x + w
-                bottom = y + h
-                left = x
+                # Calculate proportional padding (50% of face width/height)
+                h_pad = int(w * 0.3)
+                v_pad = int(h * 0.3)
+
+                # Convert to (top, right, bottom, left) format with padding
+                top = max(0, y - v_pad)
+                right = min(iw, x + w + h_pad)
+                bottom = min(ih, y + h + v_pad)
+                left = max(0, x - h_pad)
 
                 face_locations.append((top, right, bottom, left))
 
@@ -116,20 +120,20 @@ class FaceDetector:
         height = bottom - top
         width = right - left
         if height <= 0 or width <= 0:
-            return {"is_verified": False}
+            return {"is_verified": False, "timestamp": datetime.now().isoformat()}
 
-        # Add proportional padding (20% of face width/height)
-        h_pad = int(width * 0.2)
-        v_pad = int(height * 0.2)
+        # # Add proportional padding (20% of face width/height)
+        # h_pad = int(width * 0.2)
+        # v_pad = int(height * 0.2)
 
-        top = max(0, top - v_pad)
-        left = max(0, left - h_pad)
-        bottom = min(image.shape[0], bottom + v_pad)
-        right = min(image.shape[1], right + h_pad)
+        # top = max(0, top - v_pad)
+        # left = max(0, left - h_pad)
+        # bottom = min(image.shape[0], bottom + v_pad)
+        # right = min(image.shape[1], right + h_pad)
 
-        # Validate final dimensions
-        if bottom <= top or right <= left:
-            return {"is_verified": False}
+        # # Validate final dimensions
+        # if bottom <= top or right <= left:
+        #     return {"is_verified": False}
 
         # Crop the face
         cropped_face = image[top:bottom, left:right]
@@ -139,6 +143,6 @@ class FaceDetector:
             cv2.cvtColor(cropped_face, cv2.COLOR_BGR2RGB)
         )
 
-        result = self.face_verification.verifyFace(cropped_face_pil, screenshot=image)
+        result = self.face_verification.verifyFace(cropped_face_pil)
         # print("Face detector class", result)
         return result

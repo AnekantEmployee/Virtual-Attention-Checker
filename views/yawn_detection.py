@@ -90,11 +90,12 @@ class YawnDetector:
 
         try:
             gray = cv2.cvtColor(image_np, cv2.COLOR_BGR2GRAY)
-            faces = self.detector(gray)
+            faces = self.detector(gray, 1)
 
             if not faces:
                 print("No face detected")
-                return None
+                # return None
+                return image_np
 
             landmarks = self.predictor(gray, faces[0])
             mouth_points = np.array(
